@@ -1,14 +1,17 @@
 package main
 
 import (
-    "context"
-    "fmt"
-    "log"
-    "time"
+	"context"
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"time"
 
-    aw "github.com/deanishe/awgo"
-    "github.com/google/go-github/v56/github"
-    "github.com/ncruces/zenity"
+	aw "github.com/deanishe/awgo"
+	"github.com/google/go-github/v58/github"
+	"github.com/gregjones/httpcache"
+	"github.com/ncruces/zenity"
 )
 
 type magicAuth struct {
@@ -32,6 +35,10 @@ func cacheRepositories(client *github.Client) error {
 
     repos, err := getAllUserRepositories(client)
     if err != nil {
+        zerr := zenity.Error(fmt.Sprintf("Repository caching failed: %s", err), zenity.ErrorIcon)
+        if zerr != nil {
+            return zerr
+        }
         return err
     }
 
@@ -53,15 +60,29 @@ func runUserRepos(client *github.Client) {
 
     maxCacheAge := cfg.CacheAge * int(time.Minute)
     if wf.Cache.Expired(repoCacheName, time.Duration(maxCacheAge)) {
-        if err := cacheRepositories(client); err != nil {
-            wf.FatalError(err)
+        wf.Rerun(2)
+        if !wf.IsRunning("cache") {
+            cmd := exec.Command(os.Args[0], "-cache")
+            if err := wf.RunInBackground("cache", cmd); err != nil {
+                wf.FatalError(err)
+            }
+        } else {
+            log.Printf("cache job already running.")
         }
-        wf.Rerun(0.3)
+
+        if len(repos) == 0 {
+            wf.NewItem("Refreshing repository cache…").
+                Icon(aw.IconInfo)
+            wf.SendFeedback()
+            return
+        }
     }
 
     for _, repo := range repos {
+        updatedAt := repo.UpdatedAt.Time.Format("02-01-2006 15:04")
         wf.NewItem(*repo.FullName).
-            Subtitle(fmt.Sprintf("%s  •  Updated: %s", *repo.HTMLURL, repo.UpdatedAt.String())).
+            UID(*repo.FullName).
+            Subtitle(fmt.Sprintf("%s  •  Updated: %s", *repo.HTMLURL, updatedAt)).
             Var("item_url", *repo.HTMLURL).
             Arg("repo").
             Valid(true)
@@ -75,8 +96,10 @@ func runSearch(client *github.Client) {
     }
 
     for _, repo := range repos.Repositories {
+        updatedAt := repo.UpdatedAt.Time.Format("02-01-2006 15:04")
         wf.NewItem(*repo.FullName).
-            Subtitle(fmt.Sprintf("%s  •  Updated: %s", *repo.HTMLURL, repo.UpdatedAt.String())).
+            UID(*repo.FullName).
+            Subtitle(fmt.Sprintf("%s  •  Updated: %s", *repo.HTMLURL, updatedAt)).
             Var("item_url", *repo.HTMLURL).
             Arg("repo").
             Valid(true)
@@ -90,6 +113,21 @@ func runAuth() {
     if err != nil {
         wf.FatalError(err)
     }
+
+    client := github.NewClient(httpcache.NewMemoryCacheTransport().Client()).WithAuthToken(pwd)
+    sc, err := testAuthentication(client)
+
+    if err != nil {
+        zerr := zenity.Error(
+            fmt.Sprintf("Error authenticating: HTTP %d", sc),
+            zenity.ErrorIcon,
+        )
+        if zerr != nil {
+            wf.FatalError(err)
+        }
+        wf.FatalError(err)
+    }
+
     if err := wf.Keychain.Set(keychainAccount, pwd); err != nil {
         wf.FatalError(err)
     }

@@ -1,14 +1,22 @@
 package main
 
 import (
-    "context"
+	"context"
 
-    "github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v58/github"
 )
+
+func testAuthentication(client *github.Client) (statusCode int, err error) {
+    _, resp, err := client.Users.Get(context.Background(), "")
+    if err != nil {
+        return resp.StatusCode, err
+    }
+    return resp.StatusCode, nil
+}
 
 func getAllUserRepositories(client *github.Client) ([]*github.Repository, error) {
     var allRepos []*github.Repository
-    params := github.RepositoryListOptions{
+    params := github.RepositoryListByAuthenticatedUserOptions{
         Sort: "updated",
         ListOptions: github.ListOptions{
             PerPage: 100,
@@ -16,7 +24,7 @@ func getAllUserRepositories(client *github.Client) ([]*github.Repository, error)
     }
 
     for {
-        repos, resp, err := client.Repositories.List(context.Background(), "", &params)
+        repos, resp, err := client.Repositories.ListByAuthenticatedUser(context.Background(), &params)
         if err != nil {
             return nil, err
         }

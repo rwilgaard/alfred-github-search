@@ -6,8 +6,7 @@ import (
 	"os/exec"
 
 	aw "github.com/deanishe/awgo"
-	"github.com/deanishe/awgo/update"
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v58/github"
 	"github.com/gregjones/httpcache"
 	"go.deanishe.net/fuzzy"
 )
@@ -40,7 +39,7 @@ func init() {
     wf = aw.New(
         aw.SortOptions(sopts...),
         aw.AddMagic(magicAuth{wf}),
-        update.GitHub(repo),
+        // update.GitHub(repo),
     )
 }
 
@@ -98,6 +97,13 @@ func run() {
 
     cfg.APIToken = token
     client := github.NewClient(httpcache.NewMemoryCacheTransport().Client()).WithAuthToken(cfg.APIToken)
+
+    if opts.Cache {
+        err := cacheRepositories(client)
+        if err != nil {
+            wf.FatalError(err)
+        }
+    }
 
     if opts.UserRepos {
         runUserRepos(client)

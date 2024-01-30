@@ -15,10 +15,12 @@ type options struct {
     Update    bool
     UserRepos bool
     Auth      bool
+    Cache     bool
 }
 
 func init() {
     cli.BoolVar(&opts.Update, "update", false, "check for updates")
     cli.BoolVar(&opts.UserRepos, "user-repos", false, "only list repos for the authenticated user")
     cli.BoolVar(&opts.Auth, "auth", false, "authenticate")
+    cli.BoolVar(&opts.Cache, "cache", false, "refresh cache")
 }

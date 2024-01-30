@@ -104,7 +104,7 @@
 				<key>scriptfile</key>
 				<string></string>
 				<key>subtext</key>
-				<string>sdf</string>
+				<string>Search for repositories</string>
 				<key>title</key>
 				<string>Search for GitHub repositories</string>
 				<key>type</key>
@@ -180,7 +180,7 @@
 				<key>alfredfiltersresults</key>
 				<false/>
 				<key>alfredfiltersresultsmatchmode</key>
-				<integer>0</integer>
+				<integer>2</integer>
 				<key>argumenttreatemptyqueryasnil</key>
 				<true/>
 				<key>argumenttrimmode</key>
@@ -194,9 +194,9 @@
 				<key>queuedelaycustom</key>
 				<integer>3</integer>
 				<key>queuedelayimmediatelyinitially</key>
-				<false/>
+				<true/>
 				<key>queuedelaymode</key>
-				<integer>1</integer>
+				<integer>0</integer>
 				<key>queuemode</key>
 				<integer>2</integer>
 				<key>runningsubtext</key>
@@ -208,7 +208,7 @@
 				<key>scriptfile</key>
 				<string></string>
 				<key>subtext</key>
-				<string></string>
+				<string>Search for user repositories</string>
 				<key>title</key>
 				<string>Search for GitHub repositories</string>
 				<key>type</key>
@@ -250,23 +250,23 @@
 
 A workflow for quickly finding repositories in GitHub.
 
+## Installation
+
+- [Download the latest release](https://github.com/rwilgaard/alfred-github-search/releases)
+- Open the downloaded file in Finder.
+- If running on macOS Catalina or later, you **MUST** add Alfred to the list of security exceptions for running unsigned software. See [this guide](https://github.com/deanishe/awgo/wiki/Catalina) for instructions on how to do this.
 
 ## Keywords
 
-*You can change the default 'gh' keyword in the User configuration.*
+*You can change the default 'gh' and 'repo' keywords in the User configuration.*
 
-* With `gh` you can fuzzy find repositories in GitHub. The default `⏎` action will open the highlighted repository in your browser.
+- `gh` is used for searching repositories globally in Github.
+- `repo` is used for searching repositories for the authenticated user.
 
 ## Actions
 
 The following actions can be used on a highlighted repository:
-* `⏎` opens the repository in your browser.
-* `⌘` + `⏎` will show commits for the repository.
-* `⌥` + `⏎` will show pull requests for the repository.
-* `⌃` + `⏎` will show tags for the repository.
-* `⇧` + `⏎` will show branches for the repository
-* `⌘` `⇧` + `⏎` will copy SSH clone URL.
-* `⌥` `⇧` + `⏎` will copy HTTP clone URL.</string>
+- `⏎` opens the repository in your browser.</string>
 	<key>uidata</key>
 	<dict>
 		<key>166D5D2D-1535-4690-A70D-44D8A6DC3DA6</key>
@@ -353,7 +353,7 @@ The following actions can be used on a highlighted repository:
 			<key>config</key>
 			<dict>
 				<key>default</key>
-				<string>180</string>
+				<string>360</string>
 				<key>placeholder</key>
 				<string></string>
 				<key>required</key>
