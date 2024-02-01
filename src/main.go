@@ -1,15 +1,15 @@
 package main
 
 import (
-	"log"
-	"os"
-	"os/exec"
+    "log"
+    "os"
+    "os/exec"
 
-	aw "github.com/deanishe/awgo"
-	"github.com/deanishe/awgo/update"
-	"github.com/google/go-github/v58/github"
-	"github.com/gregjones/httpcache"
-	"go.deanishe.net/fuzzy"
+    aw "github.com/deanishe/awgo"
+    "github.com/deanishe/awgo/update"
+    "github.com/google/go-github/v58/github"
+    "github.com/gregjones/httpcache"
+    "go.deanishe.net/fuzzy"
 )
 
 type workflowConfig struct {
@@ -111,11 +111,11 @@ func run() {
         if len(opts.Query) > 0 {
             wf.Filter(opts.Query)
         }
-        wf.SendFeedback()
-        return
     }
 
-    runSearch(client)
+    if opts.Search {
+        runSearch(client)
+    }
 
     if wf.IsEmpty() {
         wf.NewItem("No results found...").
