@@ -1,17 +1,18 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
-	"os"
-	"os/exec"
-	"time"
+    "context"
+    "fmt"
+    "log"
+    "os"
+    "os/exec"
+    "strings"
+    "time"
 
-	aw "github.com/deanishe/awgo"
-	"github.com/google/go-github/v58/github"
-	"github.com/gregjones/httpcache"
-	"github.com/ncruces/zenity"
+    aw "github.com/deanishe/awgo"
+    "github.com/google/go-github/v58/github"
+    "github.com/gregjones/httpcache"
+    "github.com/ncruces/zenity"
 )
 
 type magicAuth struct {
@@ -90,7 +91,12 @@ func runUserRepos(client *github.Client) {
 }
 
 func runSearch(client *github.Client) {
-    repos, _, err := client.Search.Repositories(context.Background(), opts.Query, nil)
+    q := opts.Query
+    if !strings.Contains(q, "in:name") {
+        q = opts.Query + " in:name"
+    }
+
+    repos, _, err := client.Search.Repositories(context.Background(), q, nil)
     if err != nil {
         wf.FatalError(err)
     }
