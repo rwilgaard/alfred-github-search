@@ -3,12 +3,12 @@ package cmd
 import (
     aw "github.com/deanishe/awgo"
     "github.com/deanishe/awgo/update"
-    "github.com/rwilgaard/alfred-github-search/src/pkg/alfred"
+    "github.com/rwilgaard/go-alfredutils/alfredutils"
     "github.com/spf13/cobra"
     "go.deanishe.net/fuzzy"
 )
 
-type WorkflowConfig struct {
+type workflowConfig struct {
     CacheAge int `env:"cache_age"`
 }
 
@@ -20,7 +20,7 @@ const (
 
 var (
     wf      *aw.Workflow
-    cfg     = &WorkflowConfig{}
+    cfg     = &workflowConfig{}
     rootCmd = &cobra.Command{
         Use:   "github",
         Short: "github is a CLI to be used by Alfred for searching Github repositories",
@@ -32,8 +32,13 @@ func Execute() {
 }
 
 func run() {
-    wf.Args()
-    if err := alfred.InitWorkflow(wf, cfg); err != nil {
+    alfredutils.AddClearAuthMagic(wf, keychainAccount)
+
+    if err := alfredutils.InitWorkflow(wf, cfg); err != nil {
+        wf.FatalError(err)
+    }
+
+    if err := alfredutils.CheckForUpdates(wf); err != nil {
         wf.FatalError(err)
     }
 
@@ -51,10 +56,6 @@ func init() {
     }
     wf = aw.New(
         aw.SortOptions(sopts...),
-        aw.AddMagic(alfred.MagicAuth{
-            Workflow: wf,
-            Account:  keychainAccount,
-        }),
         update.GitHub(repo),
     )
 }

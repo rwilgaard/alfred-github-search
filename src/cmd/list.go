@@ -1,12 +1,12 @@
 package cmd
 
 import (
-    "fmt"
-    "time"
+	"fmt"
+	"time"
 
-    "github.com/google/go-github/v58/github"
-    "github.com/rwilgaard/alfred-github-search/src/pkg/alfred"
-    "github.com/spf13/cobra"
+	"github.com/google/go-github/v58/github"
+	"github.com/rwilgaard/go-alfredutils/alfredutils"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -15,16 +15,16 @@ var (
         Short: "list user repositories",
         Args:  cobra.ExactArgs(1),
         Run: func(cmd *cobra.Command, args []string) {
-            alfred.HandleAuthentication(wf, keychainAccount)
+            alfredutils.HandleAuthentication(wf, keychainAccount)
 
             var repos []*github.Repository
-            err := alfred.LoadCache(wf, repoCacheName, &repos)
+            err := alfredutils.LoadCache(wf, repoCacheName, &repos)
             if err != nil {
                 wf.FatalError(err)
             }
 
             maxCacheAge := time.Duration(cfg.CacheAge * int(time.Minute))
-            if err := alfred.RefreshCache(wf, repoCacheName, maxCacheAge); err != nil {
+            if err := alfredutils.RefreshCache(wf, repoCacheName, maxCacheAge); err != nil {
                 wf.FatalError(err)
             }
 
@@ -42,7 +42,7 @@ var (
             if len(query) > 0 {
                 wf.Filter(query)
             }
-            alfred.HandleFeedback(wf)
+            alfredutils.HandleFeedback(wf)
         },
     }
 )

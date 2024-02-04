@@ -1,14 +1,14 @@
 package cmd
 
 import (
-    "context"
-    "fmt"
-    "log"
-    "strings"
+	"context"
+	"fmt"
+	"log"
+	"strings"
 
-    "github.com/rwilgaard/alfred-github-search/src/pkg/alfred"
-    "github.com/rwilgaard/alfred-github-search/src/pkg/github"
-    "github.com/spf13/cobra"
+	"github.com/rwilgaard/alfred-github-search/src/pkg/github"
+	"github.com/rwilgaard/go-alfredutils/alfredutils"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -47,7 +47,7 @@ var (
                     Valid(true)
             }
 
-            alfred.HandleFeedback(wf)
+            alfredutils.HandleFeedback(wf)
         },
     }
 )
