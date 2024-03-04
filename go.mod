@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/deanishe/awgo v0.29.1
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
-	github.com/ncruces/zenity v0.10.11
+	github.com/ncruces/zenity v0.10.12
 	github.com/spf13/cobra v1.8.0
 	go.deanishe.net/fuzzy v1.0.0
 )
@@ -26,6 +26,6 @@ require (
 	github.com/rwilgaard/go-alfredutils v1.0.2
 	go.deanishe.net/env v0.5.1 // indirect
 	golang.org/x/image v0.15.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
