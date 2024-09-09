@@ -6,7 +6,7 @@ require (
 	github.com/deanishe/awgo v0.29.1
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/ncruces/zenity v0.10.13
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	go.deanishe.net/fuzzy v1.0.0
 )
 
