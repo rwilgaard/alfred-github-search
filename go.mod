@@ -23,7 +23,7 @@ require (
 	github.com/josephspurrier/goversioninfo v1.4.0 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
-	github.com/rwilgaard/go-alfredutils v1.0.2
+	github.com/rwilgaard/go-alfredutils v1.1.2
 	go.deanishe.net/env v0.5.1 // indirect
 	golang.org/x/image v0.18.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect

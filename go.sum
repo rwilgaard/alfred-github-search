@@ -40,8 +40,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 h1:GranzK4hv1/pqTIhMTXt2X8MmMOuH3hMeUR0o9SP5yc=
 github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844/go.mod h1:T1TLSfyWVBRXVGzWd0o9BI4kfoO9InEgfQe4NV3mLz8=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
-github.com/rwilgaard/go-alfredutils v1.0.2 h1:slZv6oRVFLKAkT1Xv6EqSKJ1FFHZqI9RnPvAHVR9Ps8=
-github.com/rwilgaard/go-alfredutils v1.0.2/go.mod h1:zwxLYwoQcxvBH8tb1EwH7XNSl2bwZESkacANyjEBs+E=
+github.com/rwilgaard/go-alfredutils v1.1.2 h1:1Oz/myJ5rXSBrYB9shEL2tw2x13YVDcgUPnAARjE0uo=
+github.com/rwilgaard/go-alfredutils v1.1.2/go.mod h1:zwxLYwoQcxvBH8tb1EwH7XNSl2bwZESkacANyjEBs+E=
 github.com/spf13/cobra v1.8.1 h1:e5/vxKd/rZsfSJMUX1agtjeTDf+qv1/JdBF8gg5k9ZM=
 github.com/spf13/cobra v1.8.1/go.mod h1:wHxEcudfqmLYa8iTfL+OuZPbBZkmvliBWKIezN3kD9Y=
 github.com/spf13/pflag v1.0.5 h1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA=
