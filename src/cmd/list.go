@@ -24,7 +24,7 @@ var (
             }
 
             maxCacheAge := time.Duration(cfg.CacheAge * int(time.Minute))
-            if err := alfredutils.RefreshCache(wf, repoCacheName, maxCacheAge); err != nil {
+            if err := alfredutils.RefreshCache(wf, repoCacheName, maxCacheAge, []string{"cache"}); err != nil {
                 wf.FatalError(err)
             }
 
