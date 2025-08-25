@@ -1,12 +1,12 @@
 package cmd
 
 import (
-    "fmt"
-    "log"
+	"fmt"
+	"log"
 
-    "github.com/ncruces/zenity"
-    "github.com/rwilgaard/alfred-github-search/src/pkg/github"
-    "github.com/spf13/cobra"
+	"github.com/ncruces/zenity"
+	"github.com/rwilgaard/alfred-github-search/src/pkg/github"
+	"github.com/spf13/cobra"
 )
 
 var (

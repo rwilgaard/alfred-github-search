@@ -3,55 +3,43 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
-	"strings"
 
-	"github.com/rwilgaard/alfred-github-search/src/pkg/github"
+	"github.com/google/go-github/v74/github"
+	"github.com/maniartech/gotime"
 	"github.com/rwilgaard/go-alfredutils/alfredutils"
 	"github.com/spf13/cobra"
 )
 
 var (
-    searchCmd = &cobra.Command{
-        Use:   "search",
-        Short: "search repositories globally",
-        Args:  cobra.ExactArgs(1),
-        Run: func(cmd *cobra.Command, args []string) {
-            query := args[0]
-            if !strings.Contains(query, "in:name") {
-                query += " in:name"
-            }
+	searchCmd = &cobra.Command{
+		Use:   "search",
+		Short: "search public repositories",
+		Args:  cobra.ExactArgs(1),
+		Run: func(_ *cobra.Command, args []string) {
+			query := args[0]
 
-            var gh *github.GithubService
-            token, err := wf.Keychain.Get(keychainAccount)
-            if err != nil {
-                log.Printf("Using unauthenticated client")
-                gh = github.NewGithubService()
-            } else {
-                log.Printf("Using authenticated client")
-                gh = github.NewTokenGithubService(token)
-            }
+			client := github.NewClient(nil)
+			repos, _, err := client.Search.Repositories(context.Background(), query, nil)
+			if err != nil {
+				wf.FatalError(err)
+			}
 
-            repos, _, err := gh.Client.Search.Repositories(context.Background(), query, nil)
-            if err != nil {
-                wf.FatalError(err)
-            }
+			for _, repo := range repos.Repositories {
+				lastPushTime := gotime.TimeAgo(repo.PushedAt.Time)
+				subtitle := fmt.Sprintf("%s  ·  ★ %d  ·  %s  ·  %s", repo.Owner.GetLogin(), repo.GetStargazersCount(), lastPushTime, repo.GetDescription())
+				wf.NewItem(*repo.Name).
+					UID(*repo.FullName).
+					Subtitle(subtitle).
+					Var("item_url", repo.GetHTMLURL()).
+					Arg("repo").
+					Valid(true)
+			}
 
-            for _, repo := range repos.Repositories {
-                updatedAt := repo.UpdatedAt.Time.Format("02-01-2006 15:04")
-                wf.NewItem(*repo.FullName).
-                    UID(*repo.FullName).
-                    Subtitle(fmt.Sprintf("%s  •  Updated: %s", *repo.HTMLURL, updatedAt)).
-                    Var("item_url", *repo.HTMLURL).
-                    Arg("repo").
-                    Valid(true)
-            }
-
-            alfredutils.HandleFeedback(wf)
-        },
-    }
+			alfredutils.HandleFeedback(wf)
+		},
+	}
 )
 
 func init() {
-    rootCmd.AddCommand(searchCmd)
+	rootCmd.AddCommand(searchCmd)
 }
