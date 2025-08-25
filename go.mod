@@ -14,20 +14,22 @@ require (
 
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/spf13/pflag v1.0.7 // indirect
 )
 
 require (
 	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/dchest/jsmin v1.0.0 // indirect
 	github.com/google/go-github/v58 v58.0.0
+	github.com/google/go-github/v74 v74.0.0
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/josephspurrier/goversioninfo v1.4.1 // indirect
+	github.com/josephspurrier/goversioninfo v1.5.0 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
+	github.com/maniartech/gotime v1.1.0
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
 	github.com/rwilgaard/go-alfredutils v1.1.2
 	go.deanishe.net/env v0.5.1 // indirect
-	golang.org/x/image v0.23.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/image v0.30.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 )
