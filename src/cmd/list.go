@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-    "github.com/google/go-github/v74/github"
+	"github.com/google/go-github/v74/github"
+	"github.com/maniartech/gotime"
 	"github.com/rwilgaard/go-alfredutils/alfredutils"
 	"github.com/spf13/cobra"
 )
@@ -29,13 +30,14 @@ var (
             }
 
             for _, repo := range repos {
-                updatedAt := repo.UpdatedAt.Time.Format("02-01-2006 15:04")
-                wf.NewItem(*repo.FullName).
-                    UID(*repo.FullName).
-                    Subtitle(fmt.Sprintf("%s  •  Updated: %s", *repo.HTMLURL, updatedAt)).
-                    Var("item_url", *repo.HTMLURL).
-                    Arg("repo").
-                    Valid(true)
+				lastPushTime := gotime.TimeAgo(repo.PushedAt.Time)
+				subtitle := fmt.Sprintf("%s  ·  ★ %d  ·  %s  ·  %s", repo.Owner.GetLogin(), repo.GetStargazersCount(), lastPushTime, repo.GetDescription())
+				wf.NewItem(*repo.Name).
+					UID(*repo.FullName).
+					Subtitle(subtitle).
+					Var("item_url", repo.GetHTMLURL()).
+					Arg("repo").
+					Valid(true)
             }
 
             query := args[0]
