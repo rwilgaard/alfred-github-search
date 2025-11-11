@@ -4,7 +4,7 @@ import (
     "fmt"
 
     "github.com/ncruces/zenity"
-    "github.com/rwilgaard/alfred-github-search/src/pkg/github"
+    "github.com/rwilgaard/alfred-github-search/src/internal/github"
     "github.com/spf13/cobra"
 )
 
@@ -13,16 +13,15 @@ var (
         Use:   "auth",
         Short: "authenticate",
         RunE: func(cmd *cobra.Command, args []string) error {
-            _, pw, err := zenity.Password(zenity.Title("Enter API Token"))
+            _, token, err := zenity.Password(zenity.Title("Enter API Token"))
             if err != nil {
                 return err
             }
 
-            gh := github.NewTokenGithubService(pw)
-            sc, err := gh.TestAuthentication()
-            if err != nil {
+            gh := github.NewAuthenticatedService(token)
+			if err := gh.TestAuthentication(); err != nil {
                 zerr := zenity.Error(
-                    fmt.Sprintf("Error authenticating: HTTP %d", sc),
+                    fmt.Sprintf("Error authenticating: %s", err),
                     zenity.ErrorIcon,
                 )
                 if zerr != nil {
@@ -31,7 +30,7 @@ var (
                 return err
             }
 
-            if err := wf.Keychain.Set(keychainAccount, pw); err != nil {
+            if err := wf.Keychain.Set(keychainAccount, token); err != nil {
                 return err
             }
             return nil
