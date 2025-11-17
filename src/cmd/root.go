@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	aw "github.com/deanishe/awgo"
 	"github.com/deanishe/awgo/update"
@@ -72,11 +73,17 @@ func buildRepoSubtitle(repo *github.Repository) string {
 		lastPushTime = "never"
 	}
 
-	owner := repo.Owner.GetLogin()
-	stars := repo.GetStargazersCount()
-	desc := repo.GetDescription()
+	parts := []string{
+		repo.Owner.GetLogin(),
+		fmt.Sprintf("★ %d", repo.GetStargazersCount()),
+		lastPushTime,
+	}
 
-	return fmt.Sprintf("%s  ·  ★ %d  ·  %s  ·  %s", owner, stars, lastPushTime, desc)
+	if desc := repo.GetDescription(); desc != "" {
+		parts = append(parts, desc)
+	}
+
+	return strings.Join(parts, "  ·  ")
 }
 
 func init() {
