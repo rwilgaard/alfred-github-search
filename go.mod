@@ -29,7 +29,7 @@ require (
 	github.com/rwilgaard/go-alfredutils v1.2.0
 	go.deanishe.net/env v0.5.1 // indirect
 	golang.org/x/image v0.32.0 // indirect
-	golang.org/x/oauth2 v0.33.0
+	golang.org/x/oauth2 v0.34.0
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 )
