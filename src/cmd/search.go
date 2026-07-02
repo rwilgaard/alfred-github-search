@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -13,42 +12,40 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	searchCmd = &cobra.Command{
-		Use:   "search",
-		Short: "search public repositories",
-		Args:  cobra.ExactArgs(1),
-		Run: func(_ *cobra.Command, args []string) {
-			query := args[0]
+var searchCmd = &cobra.Command{
+	Use:   "search",
+	Short: "search public repositories",
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		query := args[0]
 
-			service := gh.NewUnauthenticatedService()
+		service := gh.NewUnauthenticatedService()
 
-			repos, _, err := service.Client.Search.Repositories(context.Background(), query, nil)
+		repos, _, err := service.SearchRepositories(query)
 
-			if rateLimitErr, ok := err.(*github.RateLimitError); ok {
-				handleRateLimitError(rateLimitErr)
-				alfredutils.HandleFeedback(wf)
-				return
-			}
-
-			if err != nil {
-				wf.FatalError(err)
-			}
-
-			for _, repo := range repos.Repositories {
-				subtitle := buildRepoSubtitle(repo)
-				wf.NewItem(*repo.Name).
-					UID(*repo.FullName).
-					Subtitle(subtitle).
-					Var("item_url", repo.GetHTMLURL()).
-					Arg("repo").
-					Valid(true)
-			}
-
+		if rateLimitErr, ok := err.(*github.RateLimitError); ok {
+			handleRateLimitError(rateLimitErr)
 			alfredutils.HandleFeedback(wf)
-		},
-	}
-)
+			return
+		}
+
+		if err != nil {
+			wf.FatalError(err)
+		}
+
+		for _, repo := range repos {
+			subtitle := buildRepoSubtitle(repo)
+			wf.NewItem(*repo.Name).
+				UID(*repo.FullName).
+				Subtitle(subtitle).
+				Var("item_url", repo.GetHTMLURL()).
+				Arg("repo").
+				Valid(true)
+		}
+
+		alfredutils.HandleFeedback(wf)
+	},
+}
 
 func handleRateLimitError(err *github.RateLimitError) {
 	resetTime := err.Rate.Reset.Time
