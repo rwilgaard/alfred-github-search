@@ -7,22 +7,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	cacheCmd = &cobra.Command{
-		Use:   "cache",
-		Short: "refresh cache of user repositories",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			log.Printf("[cache] fetching repositories...")
+var cacheCmd = &cobra.Command{
+	Use:   "cache",
+	Short: "refresh cache of user repositories",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		log.Printf("[cache] fetching repositories...")
 
-			if err := fetchAndCacheRepositories(); err != nil {
-				return err
-			}
+		if err := fetchAndCacheRepositories(); err != nil {
+			return err
+		}
 
-			log.Printf("[cache] repositories fetched")
-			return nil
-		},
-	}
-)
+		log.Printf("[cache] repositories fetched")
+		return nil
+	},
+}
 
 func fetchAndCacheRepositories() error {
 	gh, err := setupGitHubClient()
