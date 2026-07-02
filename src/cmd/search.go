@@ -19,7 +19,10 @@ var searchCmd = &cobra.Command{
 	Run: func(_ *cobra.Command, args []string) {
 		query := args[0]
 
-		service := gh.NewUnauthenticatedService()
+		service, err := setupGitHubClient()
+		if err != nil {
+			service = gh.NewUnauthenticatedService()
+		}
 
 		repos, _, err := service.SearchRepositories(query)
 
