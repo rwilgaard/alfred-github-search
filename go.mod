@@ -26,7 +26,7 @@ require (
 	github.com/magefile/mage v1.15.0 // indirect
 	github.com/maniartech/gotime v1.1.0
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
-	github.com/rwilgaard/go-alfredutils v1.2.0
+	github.com/rwilgaard/go-alfredutils v1.2.1
 	go.deanishe.net/env v0.5.1 // indirect
 	golang.org/x/image v0.32.0 // indirect
 	golang.org/x/oauth2 v0.33.0
