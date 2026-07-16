@@ -2,7 +2,7 @@ module github.com/rwilgaard/alfred-github-search
 
 go 1.24.0
 
-toolchain go1.24.5
+toolchain go1.26.5
 
 require (
 	github.com/deanishe/awgo v0.29.1
