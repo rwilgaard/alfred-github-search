@@ -8,7 +8,7 @@ import (
 	aw "github.com/deanishe/awgo"
 	"github.com/deanishe/awgo/update"
 	"github.com/google/go-github/v89/github"
-	"github.com/maniartech/gotime"
+	"github.com/maniartech/gotime/v2"
 	gh "github.com/rwilgaard/alfred-github-search/src/internal/github"
 	"github.com/rwilgaard/go-alfredutils/alfredutils"
 
