@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	aw "github.com/deanishe/awgo"
 	"github.com/deanishe/awgo/update"
-	"github.com/google/go-github/v78/github"
+	"github.com/google/go-github/v89/github"
 	"github.com/maniartech/gotime"
 	gh "github.com/rwilgaard/alfred-github-search/src/internal/github"
 	"github.com/rwilgaard/go-alfredutils/alfredutils"
@@ -47,22 +48,27 @@ func run() {
 		wf.FatalError(err)
 	}
 
-	if err := alfredutils.CheckForUpdates(wf); err != nil {
-		wf.FatalError(err)
-	}
-
 	if err := rootCmd.Execute(); err != nil {
 		wf.FatalError(err)
 	}
 }
 
 func setupGitHubClient() (*gh.GithubService, error) {
-	token, err := wf.Keychain.Get(keychainAccount)
+	token := os.Getenv("github_token")
+	if token != "" {
+		wf.Var("github_token", token)
+		return gh.NewAuthenticatedService(token, wf.CacheDir()), nil
+	}
+
+	var err error
+	token, err = wf.Keychain.Get(keychainAccount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token from keychain: %w", err)
 	}
 
-	return gh.NewAuthenticatedService(token), nil
+	wf.Var("github_token", token)
+
+	return gh.NewAuthenticatedService(token, wf.CacheDir()), nil
 }
 
 func buildRepoSubtitle(repo *github.Repository) string {

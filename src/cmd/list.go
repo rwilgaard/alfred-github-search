@@ -4,7 +4,7 @@ import (
 	"time"
 
 	aw "github.com/deanishe/awgo"
-	"github.com/google/go-github/v78/github"
+	"github.com/google/go-github/v89/github"
 	"github.com/rwilgaard/go-alfredutils/alfredutils"
 	"github.com/spf13/cobra"
 )
@@ -14,6 +14,10 @@ var listCmd = &cobra.Command{
 	Short: "list user repositories",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		if err := alfredutils.CheckForUpdates(wf); err != nil {
+			wf.FatalError(err)
+		}
+
 		if ok := alfredutils.HandleAuthentication(wf, keychainAccount); !ok {
 			return
 		}

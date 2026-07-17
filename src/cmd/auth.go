@@ -19,7 +19,7 @@ var authCmd = &cobra.Command{
 		}
 		token = strings.TrimSpace(token)
 
-		gh := github.NewAuthenticatedService(token)
+		gh := github.NewAuthenticatedService(token, wf.CacheDir())
 		if err := gh.TestAuthentication(); err != nil {
 			zerr := zenity.Error(
 				fmt.Sprintf("Error authenticating: %s", err),
