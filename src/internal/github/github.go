@@ -3,9 +3,11 @@ package github
 import (
 	"context"
 	"net/http"
+	"path/filepath"
 
-	"github.com/google/go-github/v78/github"
+	"github.com/google/go-github/v89/github"
 	"github.com/gregjones/httpcache"
+	"github.com/gregjones/httpcache/diskcache"
 	"golang.org/x/oauth2"
 )
 
@@ -13,30 +15,45 @@ type GithubService struct {
 	client *github.Client
 }
 
-func newCachedClient(baseTransport http.RoundTripper) *http.Client {
-	cacheTransport := httpcache.NewMemoryCacheTransport()
-	cacheTransport.Transport = baseTransport
+func newCachedClient(baseTransport http.RoundTripper, cacheDir string) *http.Client {
+	var cacheTransport *httpcache.Transport
 
+	if cacheDir != "" {
+		diskDir := filepath.Join(cacheDir, "http-cache")
+		cache := diskcache.New(diskDir)
+		cacheTransport = httpcache.NewTransport(cache)
+	} else {
+		cacheTransport = httpcache.NewMemoryCacheTransport()
+	}
+
+	cacheTransport.Transport = baseTransport
 	return cacheTransport.Client()
 }
 
-func NewUnauthenticatedService() *GithubService {
-	httpClient := newCachedClient(nil)
+func NewUnauthenticatedService(cacheDir string) *GithubService {
+	httpClient := newCachedClient(nil, cacheDir)
+	client, err := github.NewClient(github.WithHTTPClient(httpClient))
+	if err != nil {
+		panic(err)
+	}
 
 	return &GithubService{
-		client: github.NewClient(httpClient),
+		client: client,
 	}
 }
 
-func NewAuthenticatedService(token string) *GithubService {
+func NewAuthenticatedService(token string, cacheDir string) *GithubService {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 
 	oauthTransport := &oauth2.Transport{
 		Source: ts,
 	}
 
-	httpClient := newCachedClient(oauthTransport)
-	client := github.NewClient(httpClient)
+	httpClient := newCachedClient(oauthTransport, cacheDir)
+	client, err := github.NewClient(github.WithHTTPClient(httpClient))
+	if err != nil {
+		panic(err)
+	}
 
 	return &GithubService{
 		client: client,

@@ -544,52 +544,52 @@ The following actions can be used on a highlighted repository:
 		<key>166D5D2D-1535-4690-A70D-44D8A6DC3DA6</key>
 		<dict>
 			<key>xpos</key>
-			<real>175</real>
+			<real>165</real>
 			<key>ypos</key>
-			<real>525</real>
+			<real>165</real>
 		</dict>
 		<key>2860EB8D-F128-4058-B49B-655F7C9DB453</key>
 		<dict>
 			<key>colorindex</key>
 			<integer>1</integer>
 			<key>xpos</key>
-			<real>480</real>
+			<real>470</real>
 			<key>ypos</key>
-			<real>830</real>
+			<real>470</real>
 		</dict>
 		<key>33EAF4EF-168D-484C-90B0-ED0C45E7C3FA</key>
 		<dict>
 			<key>colorindex</key>
 			<integer>1</integer>
 			<key>xpos</key>
-			<real>340</real>
+			<real>330</real>
 			<key>ypos</key>
-			<real>760</real>
+			<real>400</real>
 		</dict>
 		<key>343B40D3-2085-498D-86BD-FE1E28BF8CF4</key>
 		<dict>
 			<key>colorindex</key>
 			<integer>1</integer>
 			<key>xpos</key>
-			<real>550</real>
+			<real>540</real>
 			<key>ypos</key>
-			<real>685</real>
+			<real>325</real>
 		</dict>
 		<key>3C6AAC24-D834-452F-8514-512DDC3F0832</key>
 		<dict>
 			<key>colorindex</key>
 			<integer>1</integer>
 			<key>xpos</key>
-			<real>95</real>
+			<real>85</real>
 			<key>ypos</key>
-			<real>770</real>
+			<real>410</real>
 		</dict>
 		<key>49F962CE-F5E2-4194-903B-C1124C927F36</key>
 		<dict>
 			<key>xpos</key>
-			<real>440</real>
+			<real>540</real>
 			<key>ypos</key>
-			<real>410</real>
+			<real>50</real>
 		</dict>
 		<key>52500D8E-A518-452D-8790-035149D8DAFF</key>
 		<dict>
@@ -598,48 +598,48 @@ The following actions can be used on a highlighted repository:
 			<key>note</key>
 			<string>Error handling</string>
 			<key>xpos</key>
-			<real>175</real>
+			<real>165</real>
 			<key>ypos</key>
-			<real>740</real>
+			<real>380</real>
 		</dict>
 		<key>97BA775B-736A-4A06-A8CA-6AE317C0C08D</key>
 		<dict>
 			<key>xpos</key>
-			<real>440</real>
+			<real>540</real>
 			<key>ypos</key>
-			<real>525</real>
+			<real>165</real>
 		</dict>
 		<key>B6374932-D150-422B-90DE-9E8BD7F4D087</key>
 		<dict>
 			<key>xpos</key>
-			<real>175</real>
+			<real>165</real>
 			<key>ypos</key>
-			<real>410</real>
+			<real>50</real>
 		</dict>
 		<key>D2DA96F7-DE52-4CAD-89D5-A62D46DB2BCD</key>
 		<dict>
 			<key>colorindex</key>
 			<integer>1</integer>
 			<key>xpos</key>
-			<real>550</real>
+			<real>540</real>
 			<key>ypos</key>
-			<real>800</real>
+			<real>440</real>
 		</dict>
 		<key>DE215AA7-EF77-43D0-82E7-592C1C0D5C59</key>
 		<dict>
 			<key>xpos</key>
 			<real>345</real>
 			<key>ypos</key>
-			<real>485</real>
+			<real>125</real>
 		</dict>
 		<key>FD795D8C-23D4-408C-8562-EAB9271A73E9</key>
 		<dict>
 			<key>colorindex</key>
 			<integer>1</integer>
 			<key>xpos</key>
-			<real>480</real>
+			<real>470</real>
 			<key>ypos</key>
-			<real>715</real>
+			<real>355</real>
 		</dict>
 	</dict>
 	<key>userconfigurationconfig</key>
