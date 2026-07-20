@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -69,6 +70,15 @@ func setupGitHubClient() (*gh.GithubService, error) {
 	wf.Var("github_token", token)
 
 	return gh.NewAuthenticatedService(token, wf.CacheDir()), nil
+}
+
+// reportBackgroundError surfaces an error from a background command in Alfred.
+// Background commands aren't invoked by a Script Filter, so wf.FatalError would
+// go nowhere — the "error" inbound trigger is the only visible channel.
+func reportBackgroundError(msg string) {
+	if err := wf.Alfred.RunTrigger("error", msg); err != nil {
+		log.Printf("Alfred error trigger failed: %v", err)
+	}
 }
 
 func buildRepoSubtitle(repo *github.Repository) string {

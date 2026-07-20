@@ -35,18 +35,25 @@ var (
 			jobName := fmt.Sprintf("search_%s", queryHash)
 
 			if backgroundSearch {
-				service, err := setupGitHubClient()
-				if err != nil {
+				service, authErr := setupGitHubClient()
+				if authErr != nil {
+					log.Printf("[background] Falling back to unauthenticated search: %v", authErr)
 					service = gh.NewUnauthenticatedService(wf.CacheDir())
 				}
 
 				repos, _, err := service.SearchRepositories(query)
 				if err != nil {
+					msg := fmt.Sprintf("Search failed: %s", err)
+					if authErr != nil {
+						msg = fmt.Sprintf("%s (unauthenticated: %s)", msg, authErr)
+					}
+					reportBackgroundError(msg)
 					log.Printf("[background] Search failed: %v", err)
 					return
 				}
 
 				if err := wf.Cache.StoreJSON(cacheName, repos); err != nil {
+					reportBackgroundError(fmt.Sprintf("Search failed: could not write cache: %s", err))
 					log.Printf("[background] Storing cache failed: %v", err)
 				}
 
