@@ -56,6 +56,7 @@ var searchCmd = &cobra.Command{
 			wf.NewItem(*repo.Name).
 				UID(*repo.FullName).
 				Subtitle(subtitle).
+				Icon(repoIcon(repo)).
 				Var("item_url", repo.GetHTMLURL()).
 				Arg("repo").
 				Valid(true)
