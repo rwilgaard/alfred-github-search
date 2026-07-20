@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-github/v89/github"
 	"github.com/maniartech/gotime/v2"
 	gh "github.com/rwilgaard/alfred-github-search/src/internal/github"
+	"github.com/rwilgaard/alfred-github-search/src/internal/util"
 	"github.com/rwilgaard/go-alfredutils/alfredutils"
 
 	"github.com/spf13/cobra"
@@ -105,6 +106,13 @@ func reportBackgroundError(msg string) {
 	if err := wf.Alfred.RunTrigger("error", msg); err != nil {
 		log.Printf("Alfred error trigger failed: %v", err)
 	}
+}
+
+func repoIcon(repo *github.Repository) *aw.Icon {
+	if repo.GetPrivate() {
+		return util.GetIcon("repo-private")
+	}
+	return util.GetIcon("repo-public")
 }
 
 func buildRepoSubtitle(repo *github.Repository) string {
