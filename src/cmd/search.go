@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 
 	aw "github.com/deanishe/awgo"
@@ -33,7 +35,6 @@ var (
 			jobName := fmt.Sprintf("search_%s", queryHash)
 
 			if backgroundSearch {
-				// BACKGROUND WORKER
 				service, err := setupGitHubClient()
 				if err != nil {
 					service = gh.NewUnauthenticatedService(wf.CacheDir())
@@ -48,24 +49,22 @@ var (
 				if err := wf.Cache.StoreJSON(cacheName, repos); err != nil {
 					log.Printf("[background] Storing cache failed: %v", err)
 				}
+
+				cleanupSearchCache(wf.CacheDir(), 24*time.Hour)
 				return
 			}
 
-			// INTERACTIVE SCRIPT FILTER
 			var repos []*github.Repository
 			cacheExists := wf.Cache.Exists(cacheName)
 			cacheExpired := wf.Cache.Expired(cacheName, 10*time.Minute)
 			jobRunning := wf.IsRunning(jobName)
 
 			if cacheExists && !cacheExpired {
-				// Cache is fresh! Load and display results instantly
 				if err := wf.Cache.LoadJSON(cacheName, &repos); err != nil {
 					wf.FatalError(err)
 				}
 			} else {
-				// Cache is missing or expired
 				if !jobRunning {
-					// Spawn background worker to fetch fresh results
 					cmd := exec.Command(os.Args[0], "search", query, "--background")
 					if err := wf.RunInBackground(jobName, cmd); err != nil {
 						wf.FatalError(err)
@@ -74,27 +73,22 @@ var (
 				}
 
 				if jobRunning {
-					// Tell Alfred to rerun the script in 0.25 seconds
 					wf.Rerun(0.25)
 
-					// If we have an expired cache, show it so the screen isn't blank
 					if cacheExists {
 						if err := wf.Cache.LoadJSON(cacheName, &repos); err != nil {
 							wf.FatalError(err)
 						}
-						// Add a subtle loader at the top
 						wf.NewItem("Updating results from GitHub...").
 							Icon(aw.IconInfo).
 							Valid(false)
 					} else {
-						// Blank state loading spinner
 						wf.NewItem("Searching GitHub...").
 							Subtitle(fmt.Sprintf("Fetching results for '%s'...", query)).
 							Icon(aw.IconInfo).
 							Valid(false)
 					}
 				} else {
-					// Job finished but no cache exists (indicates a failure)
 					wf.NewItem("GitHub Search Failed").
 						Subtitle("Please check your network connection or API limits").
 						Icon(aw.IconError).
@@ -102,7 +96,6 @@ var (
 				}
 			}
 
-			// Display repositories (either fresh cached or old expired cached)
 			for _, repo := range repos {
 				subtitle := buildRepoSubtitle(repo)
 				wf.NewItem(*repo.Name).
@@ -121,4 +114,30 @@ var (
 func init() {
 	searchCmd.Flags().BoolVarP(&backgroundSearch, "background", "b", false, "run search in background and cache results")
 	rootCmd.AddCommand(searchCmd)
+}
+
+func cleanupSearchCache(cacheDir string, maxAge time.Duration) {
+	files, err := os.ReadDir(cacheDir)
+	if err != nil {
+		log.Printf("[cleanup] Failed to read cache directory: %v", err)
+		return
+	}
+
+	now := time.Now()
+	for _, file := range files {
+		if file.Type().IsRegular() && strings.HasPrefix(file.Name(), "search_") && strings.HasSuffix(file.Name(), ".json") {
+			info, err := file.Info()
+			if err != nil {
+				continue
+			}
+			if now.Sub(info.ModTime()) > maxAge {
+				filePath := filepath.Join(cacheDir, file.Name())
+				if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+					log.Printf("[cleanup] Failed to delete expired cache file %s: %v", file.Name(), err)
+				} else if err == nil {
+					log.Printf("[cleanup] Deleted expired cache file: %s", file.Name())
+				}
+			}
+		}
+	}
 }
