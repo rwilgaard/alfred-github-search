@@ -4,7 +4,7 @@ GO111MODULE  = on
 VERSION      := $(shell plutil -extract version raw -o - workflow/info.plist)
 
 .EXPORT_ALL_VARIABLES:
-.PHONY: all dep fmt lint vet build clean universal-binary package-alfred zip-alfred release help
+.PHONY: all dep fmt lint vet test build clean universal-binary package-alfred zip-alfred release help
 
 all: build
 
@@ -19,6 +19,9 @@ lint: ## Lint Golang files
 
 vet: ## Run go vet
 	@go vet ./src
+
+test: ## Run tests
+	@go test ./src/...
 
 build: dep ## Build arch-specific binaries
 	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o workflow/$(PROJECT_NAME)-amd64 ./src
