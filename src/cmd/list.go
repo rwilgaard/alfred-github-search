@@ -32,13 +32,16 @@ var listCmd = &cobra.Command{
 			wf.FatalError(err)
 		}
 
-		if !wf.Cache.Exists(repoCacheName) {
-			wf.Rerun(0.5)
-			wf.NewItem("Fetching repositories...").
-				Subtitle("Please wait a moment").
-				Icon(aw.IconInfo)
-			alfredutils.HandleFeedback(wf)
-			return
+		// RefreshCache adds its own item when the cache file doesn't exist yet, so
+		// only the warm case — a stale cache refreshing behind results we can
+		// already show — needs an indicator here.
+		refreshing := wf.Cache.Exists(repoCacheName) && wf.IsRunning(repoCacheName)
+
+		// UIDs opt items into Alfred's usage-based reordering, which would push
+		// the refresh indicator below frequently-opened repos. Suppress them for
+		// the duration of a refresh so the indicator stays on top.
+		if refreshing {
+			wf.Configure(aw.SuppressUIDs(true))
 		}
 
 		for _, repo := range repos {
@@ -59,6 +62,20 @@ var listCmd = &cobra.Command{
 		if len(query) > 0 {
 			wf.Filter(query)
 		}
+
+		// Added after Filter so the query can't discard it, then moved to the front.
+		if refreshing {
+			wf.NewItem("Updating repositories from GitHub...").
+				Subtitle("Showing cached results in the meantime").
+				Icon(aw.IconInfo).
+				Valid(false)
+
+			items := wf.Feedback.Items
+			indicator := items[len(items)-1]
+			copy(items[1:], items[:len(items)-1])
+			items[0] = indicator
+		}
+
 		alfredutils.HandleFeedback(wf)
 	},
 }
