@@ -9,11 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "list user repositories",
+var reposCmd = &cobra.Command{
+	Use:   "repos [query]",
+	Short: "list the authenticated user's repositories",
 	Args:  cobra.MaximumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, args []string) {
 		if err := alfredutils.CheckForUpdates(wf); err != nil {
 			wf.FatalError(err)
 		}
@@ -28,18 +28,12 @@ var listCmd = &cobra.Command{
 		}
 
 		maxCacheAge := time.Duration(cfg.CacheAge) * time.Minute
-		if err := alfredutils.RefreshCache(wf, repoCacheName, maxCacheAge, []string{"cache"}); err != nil {
+		if err := alfredutils.RefreshCache(wf, repoCacheName, maxCacheAge, []string{"cache", "repos"}); err != nil {
 			wf.FatalError(err)
 		}
 
-		// RefreshCache adds its own item when the cache file doesn't exist yet, so
-		// only the warm case — a stale cache refreshing behind results we can
-		// already show — needs an indicator here.
 		refreshing := wf.Cache.Exists(repoCacheName) && wf.IsRunning(repoCacheName)
 
-		// UIDs opt items into Alfred's usage-based reordering, which would push
-		// the refresh indicator below frequently-opened repos. Suppress them for
-		// the duration of a refresh so the indicator stays on top.
 		if refreshing {
 			wf.Configure(aw.SuppressUIDs(true))
 		}
@@ -63,17 +57,8 @@ var listCmd = &cobra.Command{
 			wf.Filter(query)
 		}
 
-		// Added after Filter so the query can't discard it, then moved to the front.
 		if refreshing {
-			wf.NewItem("Updating repositories from GitHub...").
-				Subtitle("Showing cached results in the meantime").
-				Icon(aw.IconInfo).
-				Valid(false)
-
-			items := wf.Feedback.Items
-			indicator := items[len(items)-1]
-			copy(items[1:], items[:len(items)-1])
-			items[0] = indicator
+			prependItem("Updating repositories from GitHub...", "Showing cached results in the meantime")
 		}
 
 		alfredutils.HandleFeedback(wf)
@@ -81,5 +66,5 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(reposCmd)
 }

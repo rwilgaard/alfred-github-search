@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"crypto/md5"
 	"fmt"
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	aw "github.com/deanishe/awgo"
 	"github.com/deanishe/awgo/update"
@@ -25,6 +27,11 @@ const (
 	repo            = "rwilgaard/alfred-github-search"
 	repoCacheName   = "repositories.json"
 	keychainAccount = "alfred-github-search"
+
+	searchCachePrefix   = "search_"
+	searchCacheMaxAge   = 10 * time.Minute
+	searchCacheTTL      = 24 * time.Hour
+	searchRerunInterval = 0.25
 )
 
 var (
@@ -72,9 +79,28 @@ func setupGitHubClient() (*gh.GithubService, error) {
 	return gh.NewAuthenticatedService(token, wf.CacheDir()), nil
 }
 
-// reportBackgroundError surfaces an error from a background command in Alfred.
-// Background commands aren't invoked by a Script Filter, so wf.FatalError would
-// go nowhere — the "error" inbound trigger is the only visible channel.
+// Queries are hashed so arbitrary user input maps to a safe filename.
+func searchCacheName(query string) string {
+	return fmt.Sprintf("%s%x.json", searchCachePrefix, md5.Sum([]byte(query)))
+}
+
+func searchJobName(query string) string {
+	return fmt.Sprintf("%s%x", searchCachePrefix, md5.Sum([]byte(query)))
+}
+
+// Call after wf.Filter, so a typed query can't discard the item.
+func prependItem(title, subtitle string) {
+	wf.NewItem(title).
+		Subtitle(subtitle).
+		Icon(aw.IconInfo).
+		Valid(false)
+
+	items := wf.Feedback.Items
+	item := items[len(items)-1]
+	copy(items[1:], items[:len(items)-1])
+	items[0] = item
+}
+
 func reportBackgroundError(msg string) {
 	if err := wf.Alfred.RunTrigger("error", msg); err != nil {
 		log.Printf("Alfred error trigger failed: %v", err)
