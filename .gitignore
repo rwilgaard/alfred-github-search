@@ -2,3 +2,5 @@
 *.alfredworkflow
 workflow/prefs.plist
 workflow/alfred-github-search
+/workflow/alfred-github-search-amd64
+/workflow/alfred-github-search-arm64

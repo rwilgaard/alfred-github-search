@@ -5,6 +5,7 @@ import (
 
 	aw "github.com/deanishe/awgo"
 	"github.com/google/go-github/v89/github"
+	"github.com/rwilgaard/alfred-github-search/src/internal/util"
 	"github.com/rwilgaard/go-alfredutils/alfredutils"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +29,7 @@ var reposCmd = &cobra.Command{
 		}
 
 		maxCacheAge := time.Duration(cfg.CacheAge) * time.Minute
-		if err := alfredutils.RefreshCache(wf, repoCacheName, maxCacheAge, []string{"cache", "repos"}); err != nil {
+		if err := alfredutils.RefreshCache(wf, repoCacheName, maxCacheAge, []string{"cache", "repos"}, util.GetIcon("refresh")); err != nil {
 			wf.FatalError(err)
 		}
 
@@ -38,20 +39,31 @@ var reposCmd = &cobra.Command{
 			wf.Configure(aw.SuppressUIDs(true))
 		}
 
+		var query string
+		if len(args) > 0 {
+			query = args[0]
+		}
+
 		for _, repo := range repos {
 			subtitle := buildRepoSubtitle(repo)
-			wf.NewItem(*repo.Name).
+			item := wf.NewItem(*repo.Name).
 				UID(*repo.FullName).
 				Subtitle(subtitle).
 				Icon(repoIcon(repo)).
 				Var("item_url", repo.GetHTMLURL()).
 				Arg("repo").
 				Valid(true)
-		}
 
-		var query string
-		if len(args) > 0 {
-			query = args[0]
+			item.NewModifier(aw.ModCmd).
+				Subtitle("View repository details and actions").
+				Var("repo_fullname", repo.GetFullName()).
+				Var("repo_html_url", repo.GetHTMLURL()).
+				Var("repo_clone_url", repo.GetCloneURL()).
+				Var("repo_ssh_url", repo.GetSSHURL()).
+				Var("list_query", query).
+				Var("origin_cmd", "repos").
+				Arg("details").
+				Valid(true)
 		}
 
 		if len(query) > 0 {

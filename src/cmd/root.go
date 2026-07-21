@@ -21,7 +21,12 @@ import (
 )
 
 type workflowConfig struct {
-	CacheAge int `env:"cache_age"`
+	CacheAge     int    `env:"cache_age"`
+	RepoFullName string `env:"repo_fullname"`
+	RepoHTMLURL  string `env:"repo_html_url"`
+	RepoCloneURL string `env:"repo_clone_url"`
+	RepoSSHURL   string `env:"repo_ssh_url"`
+	ListQuery    string `env:"list_query"`
 }
 
 const (
@@ -93,7 +98,7 @@ func searchJobName(query string) string {
 func prependItem(title, subtitle string) {
 	wf.NewItem(title).
 		Subtitle(subtitle).
-		Icon(aw.IconInfo).
+		Icon(util.GetIcon("refresh")).
 		Valid(false)
 
 	items := wf.Feedback.Items

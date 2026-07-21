@@ -53,12 +53,23 @@ var searchCmd = &cobra.Command{
 
 		for _, repo := range repos {
 			subtitle := buildRepoSubtitle(repo)
-			wf.NewItem(*repo.Name).
+			item := wf.NewItem(*repo.Name).
 				UID(*repo.FullName).
 				Subtitle(subtitle).
 				Icon(repoIcon(repo)).
 				Var("item_url", repo.GetHTMLURL()).
 				Arg("repo").
+				Valid(true)
+
+			item.NewModifier(aw.ModCmd).
+				Subtitle("View repository details and actions").
+				Var("repo_fullname", repo.GetFullName()).
+				Var("repo_html_url", repo.GetHTMLURL()).
+				Var("repo_clone_url", repo.GetCloneURL()).
+				Var("repo_ssh_url", repo.GetSSHURL()).
+				Var("list_query", query).
+				Var("origin_cmd", "search").
+				Arg("details").
 				Valid(true)
 		}
 
