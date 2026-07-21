@@ -96,3 +96,49 @@ func (gh *GithubService) GetAllUserRepositories() ([]*github.Repository, error) 
 
 	return allRepos, nil
 }
+
+func (gh *GithubService) GetIssues(owner, repo string) ([]*github.Issue, error) {
+	const want = 50
+	opts := &github.IssueListByRepoOptions{
+		State: "open",
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
+	}
+
+	var list []*github.Issue
+	for len(list) < want {
+		issues, resp, err := gh.client.Issues.ListByRepo(context.Background(), owner, repo, opts)
+		if err != nil {
+			return nil, err
+		}
+		for _, iss := range issues {
+			if !iss.IsPullRequest() {
+				list = append(list, iss)
+			}
+		}
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.ListOptions.Page = resp.NextPage
+	}
+
+	if len(list) > want {
+		list = list[:want]
+	}
+	return list, nil
+}
+
+func (gh *GithubService) GetPullRequests(owner, repo string) ([]*github.PullRequest, error) {
+	opts := &github.PullRequestListOptions{
+		State: "open",
+		ListOptions: github.ListOptions{
+			PerPage: 50,
+		},
+	}
+	prs, _, err := gh.client.PullRequests.List(context.Background(), owner, repo, opts)
+	if err != nil {
+		return nil, err
+	}
+	return prs, nil
+}
