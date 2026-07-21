@@ -23,8 +23,26 @@ Global search (`gh`) works without a token, but is subject to stricter API rate 
 
 ## Actions
 
-The following actions can be used on a highlighted repository:
+On a highlighted repository:
 - `⏎` opens the repository in your browser.
+- `⌘⏎` opens the repository details menu.
+
+### Details menu
+
+The details menu lists actions for the selected repository:
+- **Open in Browser** — open the repository home page.
+- **View Open Issues** — drill into the repository's open issues.
+- **View Open Pull Requests** — drill into the repository's open pull requests.
+- **Copy HTTPS Clone URL** — copy the HTTPS clone URL to the clipboard.
+- **Copy SSH Clone URL** — copy the SSH clone URL to the clipboard.
+- **Back to Repositories** — return to the repository list.
+
+### Issues and pull requests
+
+In the issues or pull requests sub-menu:
+- `⏎` opens the selected issue or pull request in your browser.
+- Type to filter the list.
+- **Back to Actions** returns to the details menu.
 
 ## Configuration
 
