@@ -5,6 +5,7 @@ go 1.26.4
 require (
 	github.com/deanishe/awgo v0.29.1
 	github.com/google/go-github/v89 v89.0.0
+	github.com/google/go-github/v91 v91.0.0
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/maniartech/gotime/v2 v2.0.4
 	github.com/ncruces/zenity v0.10.15
