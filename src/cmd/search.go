@@ -1,87 +1,45 @@
 package cmd
 
 import (
-	"os"
-	"os/exec"
+	"fmt"
+	"log"
 
-	aw "github.com/deanishe/awgo"
-	"github.com/google/go-github/v89/github"
-
-	"github.com/rwilgaard/go-alfredutils/alfredutils"
+	gh "github.com/rwilgaard/alfred-github-search/src/internal/github"
 	"github.com/spf13/cobra"
 )
 
+// searchCmd searches GitHub on every query. Alfred waits for typing to pause
+// before running it, and responses are cached for searchMaxAge, so repeating
+// or backspacing to an earlier query makes no request.
 var searchCmd = &cobra.Command{
 	Use:   "search <query>",
 	Short: "search public repositories",
 	Args:  cobra.ExactArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
 		query := args[0]
-		cacheName := searchCacheName(query)
-		jobName := searchJobName(query)
 
-		var repos []*github.Repository
-		cacheExists := wf.Cache.Exists(cacheName)
-		fetching := wf.Cache.Expired(cacheName, searchCacheMaxAge)
-
-		if cacheExists && !fetching {
-			if err := wf.Cache.LoadJSON(cacheName, &repos); err != nil {
+		// Public search works without a token, so an auth failure degrades to
+		// an unauthenticated (rate-limited) client rather than failing outright.
+		service, authErr := setupGitHubClient(searchMaxAge)
+		if authErr != nil {
+			log.Printf("falling back to unauthenticated search: %v", authErr)
+			var err error
+			service, err = gh.NewUnauthenticatedService(wf.Cache, searchMaxAge)
+			if err != nil {
 				wf.FatalError(err)
 			}
-		} else {
-			if !wf.IsRunning(jobName) {
-				exe, err := os.Executable()
-				if err != nil {
-					wf.FatalError(err)
-				}
-				cmd := exec.Command(exe, "cache", "search", query)
-				if err := wf.RunInBackground(jobName, cmd); err != nil {
-					wf.FatalError(err)
-				}
-			}
-
-			wf.Rerun(searchRerunInterval)
-
-			wf.Configure(aw.SuppressUIDs(true))
-
-			if cacheExists {
-				if err := wf.Cache.LoadJSON(cacheName, &repos); err != nil {
-					wf.FatalError(err)
-				}
-			}
 		}
 
-		for _, repo := range repos {
-			subtitle := buildRepoSubtitle(repo)
-			item := wf.NewItem(*repo.Name).
-				UID(*repo.FullName).
-				Subtitle(subtitle).
-				Icon(repoIcon(repo)).
-				Var("item_url", repo.GetHTMLURL()).
-				Arg("repo").
-				Valid(true)
-
-			item.NewModifier(aw.ModCmd).
-				Subtitle("View repository details and actions").
-				Var("repo_fullname", repo.GetFullName()).
-				Var("repo_html_url", repo.GetHTMLURL()).
-				Var("repo_clone_url", repo.GetCloneURL()).
-				Var("repo_ssh_url", repo.GetSSHURL()).
-				Var("list_query", query).
-				Var("origin_cmd", "search").
-				Arg("details").
-				Valid(true)
-		}
-
-		if fetching {
-			if cacheExists {
-				prependItem("Updating results from GitHub...", "Showing cached results in the meantime")
-			} else {
-				prependItem("Searching GitHub...", "Fetching results for '"+query+"'...")
+		repos, err := service.SearchRepositories(query)
+		if err != nil {
+			if authErr != nil {
+				err = fmt.Errorf("%w (unauthenticated: %w)", err, authErr)
 			}
+			wf.FatalError(err)
 		}
 
-		alfredutils.HandleFeedback(wf)
+		addRepoItems(repos)
+		wf.Send()
 	},
 }
 

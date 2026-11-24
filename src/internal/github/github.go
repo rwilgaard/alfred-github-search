@@ -2,75 +2,52 @@ package github
 
 import (
 	"context"
-	"net/http"
-	"path/filepath"
+	"fmt"
+	"time"
 
 	"github.com/google/go-github/v89/github"
-	"github.com/gregjones/httpcache"
-	"github.com/gregjones/httpcache/diskcache"
-	"golang.org/x/oauth2"
+	"github.com/rwilgaard/go-alfredutils/v2/alfred"
+	"github.com/rwilgaard/go-alfredutils/v2/alfred/httpcache"
 )
 
 type GithubService struct {
 	client *github.Client
 }
 
-func newCachedClient(baseTransport http.RoundTripper, cacheDir string) *http.Client {
-	var cacheTransport *httpcache.Transport
-
-	if cacheDir != "" {
-		diskDir := filepath.Join(cacheDir, "http-cache")
-		cache := diskcache.New(diskDir)
-		cacheTransport = httpcache.NewTransport(cache)
-	} else {
-		cacheTransport = httpcache.NewMemoryCacheTransport()
-	}
-
-	cacheTransport.Transport = baseTransport
-	return cacheTransport.Client()
-}
-
-func NewUnauthenticatedService(cacheDir string) *GithubService {
-	httpClient := newCachedClient(nil, cacheDir)
-	client, err := github.NewClient(github.WithHTTPClient(httpClient))
+// newClient stores GET responses in store: younger than maxAge they are used
+// without a request, older ones are revalidated with ETags (GitHub doesn't
+// count a 304 against the rate limit). The token is set outside the cache,
+// so cached responses are keyed by it.
+func newClient(store *alfred.Store, maxAge time.Duration, opts ...github.ClientOptionsFunc) (*GithubService, error) {
+	transport := &httpcache.Transport{Store: store, MaxAge: maxAge, StaleIfError: true}
+	opts = append([]github.ClientOptionsFunc{github.WithTransport(transport)}, opts...)
+	client, err := github.NewClient(opts...)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
-
-	return &GithubService{
-		client: client,
-	}
+	return &GithubService{client: client}, nil
 }
 
-func NewAuthenticatedService(token string, cacheDir string) *GithubService {
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-
-	oauthTransport := &oauth2.Transport{
-		Source: ts,
-	}
-
-	httpClient := newCachedClient(oauthTransport, cacheDir)
-	client, err := github.NewClient(github.WithHTTPClient(httpClient))
-	if err != nil {
-		panic(err)
-	}
-
-	return &GithubService{
-		client: client,
-	}
+func NewUnauthenticatedService(store *alfred.Store, maxAge time.Duration) (*GithubService, error) {
+	return newClient(store, maxAge)
 }
 
+func NewAuthenticatedService(token string, store *alfred.Store, maxAge time.Duration) (*GithubService, error) {
+	return newClient(store, maxAge, github.WithAuthToken(token))
+}
+
+// TestAuthentication verifies the token by fetching the authenticated user.
 func (gh *GithubService) TestAuthentication() error {
 	_, _, err := gh.client.Users.Get(context.Background(), "")
 	return err
 }
 
-func (gh *GithubService) SearchRepositories(query string) ([]*github.Repository, *github.Response, error) {
-	result, resp, err := gh.client.Search.Repositories(context.Background(), query, nil)
+func (gh *GithubService) SearchRepositories(query string) ([]*github.Repository, error) {
+	result, _, err := gh.client.Search.Repositories(context.Background(), query, nil)
 	if err != nil {
-		return nil, resp, err
+		return nil, fmt.Errorf("failed to search repositories: %w", err)
 	}
-	return result.Repositories, resp, nil
+	return result.Repositories, nil
 }
 
 func (gh *GithubService) GetAllUserRepositories() ([]*github.Repository, error) {
@@ -85,7 +62,7 @@ func (gh *GithubService) GetAllUserRepositories() ([]*github.Repository, error) 
 	for {
 		repos, resp, err := gh.client.Repositories.ListByAuthenticatedUser(context.Background(), &opts)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to list repositories: %w", err)
 		}
 		allRepos = append(allRepos, repos...)
 		if resp.NextPage == 0 {
@@ -110,7 +87,7 @@ func (gh *GithubService) GetIssues(owner, repo string) ([]*github.Issue, error) 
 	for len(list) < want {
 		issues, resp, err := gh.client.Issues.ListByRepo(context.Background(), owner, repo, opts)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to list issues: %w", err)
 		}
 		for _, iss := range issues {
 			if !iss.IsPullRequest() {
@@ -138,7 +115,15 @@ func (gh *GithubService) GetPullRequests(owner, repo string) ([]*github.PullRequ
 	}
 	prs, _, err := gh.client.PullRequests.List(context.Background(), owner, repo, opts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list pull requests: %w", err)
 	}
 	return prs, nil
+}
+
+func (gh *GithubService) GetRepository(owner, repo string) (*github.Repository, error) {
+	r, _, err := gh.client.Repositories.Get(context.Background(), owner, repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repository: %w", err)
+	}
+	return r, nil
 }

@@ -1,0 +1,158 @@
+{
+  "variablesconfig": {
+    "auth_token": {
+      "scriptenv": true
+    }
+  },
+  "window": {
+    "title": "GitHub Search",
+    "padding": 16,
+    "size": {
+      "width": 420
+    },
+    "root": {
+      "type": "view",
+      "layout": "inline",
+      "direction": "vertical",
+      "spacing": 6,
+      "components": [
+        {
+          "type": "label",
+          "text": "Log in to GitHub",
+          "font": {
+            "size": "large",
+            "weight": "bold"
+          }
+        },
+        {
+          "type": "label",
+          "text": "The repo keyword lists your repositories with a personal access token, stored in your Keychain.",
+          "colour": "secondaryLabelColor",
+          "linebreak": "wordwrap"
+        },
+        {
+          "type": "label",
+          "text": "Personal access token",
+          "font": {
+            "size": "small"
+          },
+          "colour": "secondaryLabelColor"
+        },
+        {
+          "id": "token",
+          "type": "passwordfield",
+          "focus": true,
+          "events": [
+            {
+              "triggers": "actioned",
+              "action": [
+                {
+                  "type": "json",
+                  "src": {
+                    "update": {
+                      "ids": {
+                        "save": {
+                          "enabled": false,
+                          "text": "Checking…"
+                        },
+                        "status": {
+                          "text": " "
+                        }
+                      }
+                    }
+                  },
+                  "variables": {
+                    "auth_token": "{value:token.text}"
+                  }
+                },
+                {
+                  "type": "script",
+                  "src": "../scripts/run.sh",
+                  "args": [
+                    "ui-auth"
+                  ],
+                  "async": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "view",
+          "layout": "border",
+          "components": [
+            {
+              "id": "save",
+              "type": "button",
+              "text": "Save",
+              "events": [
+                {
+                  "triggers": "actioned",
+                  "action": [
+                    {
+                      "type": "json",
+                      "src": {
+                        "update": {
+                          "ids": {
+                            "save": {
+                              "enabled": false,
+                              "text": "Checking…"
+                            },
+                            "status": {
+                              "text": " "
+                            }
+                          }
+                        }
+                      },
+                      "variables": {
+                        "auth_token": "{value:token.text}"
+                      }
+                    },
+                    {
+                      "type": "script",
+                      "src": "../scripts/run.sh",
+                      "args": [
+                        "ui-auth"
+                      ],
+                      "async": true
+                    }
+                  ]
+                }
+              ],
+              "constraints": {
+                "region": "left"
+              }
+            },
+            {
+              "type": "button",
+              "text": "Create a token…",
+              "events": [
+                {
+                  "triggers": "actioned",
+                  "action": {
+                    "type": "json",
+                    "src": {
+                      "open": {
+                        "type": "url",
+                        "src": "https://github.com/settings/tokens/new?description=Alfred%20GitHub%20Search&scopes=repo"
+                      }
+                    }
+                  }
+                }
+              ],
+              "constraints": {
+                "region": "right"
+              }
+            }
+          ]
+        },
+        {
+          "id": "status",
+          "type": "label",
+          "text": " ",
+          "linebreak": "wordwrap"
+        }
+      ]
+    }
+  }
+}
