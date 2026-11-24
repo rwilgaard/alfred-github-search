@@ -22,7 +22,20 @@
       "scriptenv": true
     },
     "item_url": {
-      "default": ""
+      "default": "",
+      "scriptenv": true
+    },
+    "p_title": {
+      "default": " "
+    },
+    "p_detail": {
+      "default": " "
+    },
+    "p_tags": {
+      "default": " "
+    },
+    "p_body": {
+      "default": " "
     }
   },
   "window": {
@@ -169,6 +182,163 @@
                 "pulls"
               ],
               "async": true
+            }
+          ]
+        },
+        {
+          "shortcut": "⌘Y",
+          "action": [
+            {
+              "type": "json",
+              "variables": {
+                "item_url": "{value:items.selected.url.text}",
+                "p_title": "{value:items.selected.ptitle.text}",
+                "p_detail": "{value:items.selected.pdetail.text}",
+                "p_tags": "{value:items.selected.ptags.text}",
+                "p_body": "{value:items.selected.pbody.text}"
+              },
+              "src": {}
+            },
+            {
+              "type": "json",
+              "src": {
+                "sheet": {
+                  "id": "preview",
+                  "root": {
+                    "type": "view",
+                    "layout": "border",
+                    "padding": 16,
+                    "spacing": 10,
+                    "shortcuts": [
+                      {
+                        "shortcut": "↩",
+                        "action": {
+                          "type": "script",
+                          "src": "../scripts/run.sh",
+                          "args": [
+                            "ui-open",
+                            "sheet"
+                          ],
+                          "async": true
+                        }
+                      }
+                    ],
+                    "components": [
+                      {
+                        "constraints": {
+                          "region": "top"
+                        },
+                        "type": "view",
+                        "layout": "inline",
+                        "direction": "vertical",
+                        "spacing": 3,
+                        "components": [
+                          {
+                            "type": "label",
+                            "text": "{var:p_title}",
+                            "font": {
+                              "size": "large",
+                              "weight": "bold"
+                            },
+                            "linebreak": "wordwrap",
+                            "constraints": {
+                              "size": {
+                                "width": 560
+                              }
+                            }
+                          },
+                          {
+                            "type": "label",
+                            "text": "{var:p_detail}",
+                            "font": {
+                              "size": "small"
+                            },
+                            "colour": "secondaryLabelColor",
+                            "linebreak": "wordwrap",
+                            "constraints": {
+                              "size": {
+                                "width": 560
+                              }
+                            }
+                          },
+                          {
+                            "type": "label",
+                            "text": "{var:p_tags}",
+                            "font": {
+                              "size": "small"
+                            },
+                            "colour": "secondaryLabelColor",
+                            "linebreak": "wordwrap",
+                            "constraints": {
+                              "size": {
+                                "width": 560
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "constraints": {
+                          "region": "centre",
+                          "size": {
+                            "width": 560,
+                            "height": 340
+                          }
+                        },
+                        "type": "markdownarea",
+                        "text": "{var:p_body}",
+                        "behaviour": {
+                          "mode": "replace",
+                          "scroll": "start"
+                        }
+                      },
+                      {
+                        "constraints": {
+                          "region": "bottom"
+                        },
+                        "type": "view",
+                        "layout": "border",
+                        "components": [
+                          {
+                            "type": "button",
+                            "text": "Open on GitHub  ↩",
+                            "events": [
+                              {
+                                "triggers": "actioned",
+                                "action": {
+                                  "type": "script",
+                                  "src": "../scripts/run.sh",
+                                  "args": [
+                                    "ui-open",
+                                    "sheet"
+                                  ],
+                                  "async": true
+                                }
+                              }
+                            ],
+                            "focus": true,
+                            "constraints": {
+                              "region": "right"
+                            }
+                          },
+                          {
+                            "type": "label",
+                            "text": "Esc to close",
+                            "font": {
+                              "size": "small"
+                            },
+                            "colour": "secondaryLabelColor",
+                            "constraints": {
+                              "region": "left",
+                              "position": "centre"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
             }
           ]
         }
@@ -349,7 +519,7 @@
             {
               "id": "filter",
               "type": "textfield",
-              "placeholder": "Filter open issues   ·   ⌘2 pull requests   ·   ↑↓ select   ↩ open",
+              "placeholder": "Filter open issues   ·   ⌘2 pull requests   ·   ↩ open   ·   ⌘Y preview",
               "focus": true,
               "events": [
                 {
@@ -363,16 +533,14 @@
                 {
                   "triggers": "actioned",
                   "action": {
-                    "type": "json",
+                    "type": "script",
+                    "src": "../scripts/run.sh",
+                    "args": [
+                      "ui-open"
+                    ],
+                    "async": true,
                     "variables": {
                       "item_url": "{value:items.selected.url.text}"
-                    },
-                    "src": {
-                      "open": {
-                        "type": "url",
-                        "src": "{var:item_url}"
-                      },
-                      "finish": {}
                     }
                   }
                 }
@@ -411,6 +579,26 @@
                       "hidden": true
                     },
                     {
+                      "id": "ptitle",
+                      "type": "label",
+                      "hidden": true
+                    },
+                    {
+                      "id": "pdetail",
+                      "type": "label",
+                      "hidden": true
+                    },
+                    {
+                      "id": "ptags",
+                      "type": "label",
+                      "hidden": true
+                    },
+                    {
+                      "id": "pbody",
+                      "type": "label",
+                      "hidden": true
+                    },
+                    {
                       "type": "view",
                       "layout": "inline",
                       "direction": "vertical",
@@ -444,16 +632,14 @@
                 {
                   "triggers": "doubleclicked",
                   "action": {
-                    "type": "json",
+                    "type": "script",
+                    "src": "../scripts/run.sh",
+                    "args": [
+                      "ui-open"
+                    ],
+                    "async": true,
                     "variables": {
                       "item_url": "{value:items.selected.url.text}"
-                    },
-                    "src": {
-                      "open": {
-                        "type": "url",
-                        "src": "{var:item_url}"
-                      },
-                      "finish": {}
                     }
                   }
                 }
