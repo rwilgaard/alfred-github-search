@@ -3,7 +3,6 @@ package cmd
 import (
 	"log"
 
-	aw "github.com/deanishe/awgo"
 	"github.com/spf13/cobra"
 )
 
@@ -11,10 +10,9 @@ var updateCmd = &cobra.Command{
 	Use:          "update",
 	Short:        "check for updates",
 	SilenceUsage: true,
-	RunE: func(_ *cobra.Command, _ []string) error {
-		wf.Configure(aw.TextErrors(true))
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		log.Println("Checking for updates...")
-		return wf.CheckForUpdate()
+		return updater.Check(cmd.Context())
 	},
 }
 

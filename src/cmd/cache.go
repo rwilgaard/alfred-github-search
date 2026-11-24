@@ -4,141 +4,94 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/rwilgaard/go-alfredutils/v2/alfred/httpcache"
 	"github.com/spf13/cobra"
-
-	gh "github.com/rwilgaard/alfred-github-search/src/internal/github"
 )
 
-// cacheCmd and its subcommands are invoked in the background by the Script
-// Filter commands, never by the user. Alfred isn't listening for their output,
-// so failures are reported via reportBackgroundError rather than wf.FatalError.
+// Stored API responses older than this are deleted by the cache job. Search
+// stores one per query, so without pruning the folder grows without bound.
+const httpCacheTTL = 24 * time.Hour
+
+// cacheCmd runs in the background, started by the repos Script Filter. Alfred
+// isn't listening for its output, so failures go through wf.ReportError.
 var cacheCmd = &cobra.Command{
 	Use:    "cache",
-	Short:  "refresh cached data in the background",
+	Short:  "refresh the cache of user repositories",
 	Hidden: true,
-}
-
-var cacheReposCmd = &cobra.Command{
-	Use:   "repos",
-	Short: "refresh the cache of user repositories",
 	RunE: func(_ *cobra.Command, _ []string) error {
-		log.Printf("[cache] fetching repositories...")
-
+		log.Println("[cache] fetching repositories...")
 		if err := fetchAndCacheRepositories(); err != nil {
-			return err
+			wf.ReportError(fmt.Errorf("cache failed: %w", err))
+			return nil
 		}
+		log.Println("[cache] repositories fetched")
 
-		log.Printf("[cache] repositories fetched")
-		return nil
-	},
-}
-
-var cacheSearchCmd = &cobra.Command{
-	Use:   "search <query>",
-	Short: "run a repository search and cache the results",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(_ *cobra.Command, args []string) error {
-		query := args[0]
-		log.Printf("[cache] searching for %q...", query)
-
-		if err := fetchAndCacheSearch(query); err != nil {
-			return err
-		}
-
-		cleanupSearchCache(wf.CacheDir(), searchCacheTTL)
-		log.Printf("[cache] search results fetched")
+		pruneHTTPCache(httpCacheTTL)
+		removeLegacyCache()
 		return nil
 	},
 }
 
 func fetchAndCacheRepositories() error {
-	gh, err := setupGitHubClient()
+	// MaxAge 0: always revalidate, so the list is current; unchanged pages
+	// come back as 304s.
+	service, err := setupGitHubClient(0)
 	if err != nil {
-		reportBackgroundError(fmt.Sprintf("Cache failed: Error retrieving credentials: %s", err))
-		return err
+		return fmt.Errorf("error retrieving credentials: %w", err)
 	}
 
-	repos, err := gh.GetAllUserRepositories()
+	repos, err := service.GetAllUserRepositories()
 	if err != nil {
-		reportBackgroundError(fmt.Sprintf("Cache failed: Could not fetch repos: %s", err))
-		return err
+		return fmt.Errorf("could not fetch repos: %w", err)
 	}
 
 	if err := wf.Cache.StoreJSON(repoCacheName, repos); err != nil {
-		reportBackgroundError(fmt.Sprintf("Cache failed: Could not write cache file: %s", err))
-		return err
+		return fmt.Errorf("could not write cache: %w", err)
 	}
-
 	return nil
 }
 
-func fetchAndCacheSearch(query string) error {
-	// Public search works without a token, so an auth failure degrades to an
-	// unauthenticated (rate-limited) client rather than failing outright.
-	service, authErr := setupGitHubClient()
-	if authErr != nil {
-		log.Printf("[cache] falling back to unauthenticated search: %v", authErr)
-		service = gh.NewUnauthenticatedService(wf.CacheDir())
-	}
-
-	repos, _, err := service.SearchRepositories(query)
+func pruneHTTPCache(maxAge time.Duration) {
+	dir := wf.Cache.Path(httpcache.DefaultDir)
+	entries, err := os.ReadDir(dir)
 	if err != nil {
-		msg := fmt.Sprintf("Search failed: %s", err)
-		if authErr != nil {
-			msg = fmt.Sprintf("%s (unauthenticated: %s)", msg, authErr)
+		if !os.IsNotExist(err) {
+			log.Printf("[cache] read %s: %v", dir, err)
 		}
-		reportBackgroundError(msg)
-		return err
-	}
-
-	if err := wf.Cache.StoreJSON(searchCacheName(query), repos); err != nil {
-		reportBackgroundError(fmt.Sprintf("Search failed: could not write cache: %s", err))
-		return err
-	}
-
-	return nil
-}
-
-// Each distinct query gets its own cache file, so without this the cache
-// directory grows without bound.
-func cleanupSearchCache(cacheDir string, maxAge time.Duration) {
-	files, err := os.ReadDir(cacheDir)
-	if err != nil {
-		log.Printf("[cleanup] Failed to read cache directory: %v", err)
 		return
 	}
+	for _, e := range entries {
+		key := httpcache.DefaultDir + "/" + e.Name()
+		if e.Type().IsRegular() && wf.Cache.Expired(key, maxAge) {
+			if err := wf.Cache.Delete(key); err != nil {
+				log.Printf("[cache] delete %s: %v", key, err)
+			}
+		}
+	}
+}
 
-	now := time.Now()
-	for _, file := range files {
-		if !file.Type().IsRegular() ||
-			!strings.HasPrefix(file.Name(), searchCachePrefix) ||
-			!strings.HasSuffix(file.Name(), ".json") {
-			continue
+// removeLegacyCache deletes what versions before 1.3 cached: a disk cache of
+// HTTP responses and one file of results per search query.
+func removeLegacyCache() {
+	if err := os.RemoveAll(wf.Cache.Path("http-cache")); err != nil {
+		log.Printf("[cache] remove legacy http-cache: %v", err)
+	}
+	entries, err := os.ReadDir(wf.Cache.Path(""))
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		if name := e.Name(); strings.HasPrefix(name, "search_") {
+			if err := wf.Cache.Delete(name); err != nil {
+				log.Printf("[cache] delete %s: %v", name, err)
+			}
 		}
-
-		info, err := file.Info()
-		if err != nil {
-			continue
-		}
-		if now.Sub(info.ModTime()) <= maxAge {
-			continue
-		}
-
-		filePath := filepath.Join(cacheDir, file.Name())
-		if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
-			log.Printf("[cleanup] Failed to delete expired cache file %s: %v", file.Name(), err)
-			continue
-		}
-		log.Printf("[cleanup] Deleted expired cache file: %s", file.Name())
 	}
 }
 
 func init() {
-	cacheCmd.AddCommand(cacheReposCmd)
-	cacheCmd.AddCommand(cacheSearchCmd)
 	rootCmd.AddCommand(cacheCmd)
 }

@@ -1,0 +1,571 @@
+{
+  "variablesconfig": {
+    "repo_fullname": {
+      "src": "variable",
+      "scriptenv": true,
+      "default": " "
+    },
+    "repo_html_url": {
+      "src": "variable",
+      "default": ""
+    },
+    "repo_clone_url": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "repo_ssh_url": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "github_token": {
+      "src": "variable",
+      "scriptenv": true
+    },
+    "item_url": {
+      "default": ""
+    }
+  },
+  "window": {
+    "title": "GitHub Search",
+    "padding": 16,
+    "size": {
+      "width": 640,
+      "height": 580
+    },
+    "root": {
+      "type": "view",
+      "layout": "border",
+      "spacing": 10,
+      "shortcuts": [
+        {
+          "shortcut": "↑",
+          "action": {
+            "type": "function",
+            "src": "items",
+            "args": "selectup"
+          }
+        },
+        {
+          "shortcut": "↓",
+          "action": {
+            "type": "function",
+            "src": "items",
+            "args": "selectdown"
+          }
+        },
+        {
+          "shortcut": "⌘O",
+          "action": {
+            "type": "json",
+            "src": {
+              "open": {
+                "type": "url",
+                "src": "{var:repo_html_url}"
+              },
+              "finish": {}
+            }
+          }
+        },
+        {
+          "shortcut": "⌘C",
+          "action": {
+            "type": "script",
+            "src": "../scripts/run.sh",
+            "args": [
+              "ui-copy",
+              "https"
+            ],
+            "async": true
+          }
+        },
+        {
+          "shortcut": "⌥⌘C",
+          "action": {
+            "type": "script",
+            "src": "../scripts/run.sh",
+            "args": [
+              "ui-copy",
+              "ssh"
+            ],
+            "async": true
+          }
+        },
+        {
+          "shortcut": "⌘1",
+          "action": [
+            {
+              "type": "json",
+              "src": {
+                "update": {
+                  "ids": {
+                    "items": {
+                      "data": {
+                        "type": "basic",
+                        "src": []
+                      }
+                    },
+                    "loading": {
+                      "hidden": false,
+                      "text": "Loading…"
+                    },
+                    "issuesbtn": {
+                      "font": {
+                        "weight": "bold"
+                      }
+                    },
+                    "pullsbtn": {
+                      "font": null
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "script",
+              "src": "../scripts/run.sh",
+              "args": [
+                "ui-repo-items",
+                "issues"
+              ],
+              "async": true
+            }
+          ]
+        },
+        {
+          "shortcut": "⌘2",
+          "action": [
+            {
+              "type": "json",
+              "src": {
+                "update": {
+                  "ids": {
+                    "items": {
+                      "data": {
+                        "type": "basic",
+                        "src": []
+                      }
+                    },
+                    "loading": {
+                      "hidden": false,
+                      "text": "Loading…"
+                    },
+                    "pullsbtn": {
+                      "font": {
+                        "weight": "bold"
+                      }
+                    },
+                    "issuesbtn": {
+                      "font": null
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "script",
+              "src": "../scripts/run.sh",
+              "args": [
+                "ui-repo-items",
+                "pulls"
+              ],
+              "async": true
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "triggers": "launched",
+          "action": {
+            "type": "script",
+            "src": "../scripts/run.sh",
+            "args": [
+              "ui-repo"
+            ],
+            "async": true
+          }
+        }
+      ],
+      "components": [
+        {
+          "constraints": {
+            "region": "top"
+          },
+          "type": "view",
+          "layout": "inline",
+          "direction": "vertical",
+          "spacing": 12,
+          "components": [
+            {
+              "type": "view",
+              "layout": "inline",
+              "direction": "vertical",
+              "spacing": 3,
+              "components": [
+                {
+                  "id": "title",
+                  "type": "label",
+                  "text": "{var:repo_fullname}",
+                  "font": {
+                    "size": "large",
+                    "weight": "bold"
+                  }
+                },
+                {
+                  "id": "subtitle",
+                  "type": "label",
+                  "text": " ",
+                  "linebreak": "truncatetail"
+                },
+                {
+                  "id": "meta",
+                  "type": "label",
+                  "text": " ",
+                  "font": {
+                    "size": "small"
+                  },
+                  "colour": "secondaryLabelColor",
+                  "linebreak": "truncatetail"
+                }
+              ]
+            },
+            {
+              "type": "view",
+              "layout": "border",
+              "components": [
+                {
+                  "constraints": {
+                    "region": "left"
+                  },
+                  "type": "view",
+                  "layout": "inline",
+                  "direction": "horizontal",
+                  "spacing": 4,
+                  "components": [
+                    {
+                      "id": "issuesbtn",
+                      "type": "button",
+                      "text": "Issues  ⌘1",
+                      "events": [
+                        {
+                          "triggers": "actioned",
+                          "action": [
+                            {
+                              "type": "json",
+                              "src": {
+                                "update": {
+                                  "ids": {
+                                    "items": {
+                                      "data": {
+                                        "type": "basic",
+                                        "src": []
+                                      }
+                                    },
+                                    "loading": {
+                                      "hidden": false,
+                                      "text": "Loading…"
+                                    },
+                                    "issuesbtn": {
+                                      "font": {
+                                        "weight": "bold"
+                                      }
+                                    },
+                                    "pullsbtn": {
+                                      "font": null
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "type": "script",
+                              "src": "../scripts/run.sh",
+                              "args": [
+                                "ui-repo-items",
+                                "issues"
+                              ],
+                              "async": true
+                            }
+                          ]
+                        }
+                      ],
+                      "font": {
+                        "weight": "bold"
+                      }
+                    },
+                    {
+                      "id": "pullsbtn",
+                      "type": "button",
+                      "text": "Pull requests  ⌘2",
+                      "events": [
+                        {
+                          "triggers": "actioned",
+                          "action": [
+                            {
+                              "type": "json",
+                              "src": {
+                                "update": {
+                                  "ids": {
+                                    "items": {
+                                      "data": {
+                                        "type": "basic",
+                                        "src": []
+                                      }
+                                    },
+                                    "loading": {
+                                      "hidden": false,
+                                      "text": "Loading…"
+                                    },
+                                    "pullsbtn": {
+                                      "font": {
+                                        "weight": "bold"
+                                      }
+                                    },
+                                    "issuesbtn": {
+                                      "font": null
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "type": "script",
+                              "src": "../scripts/run.sh",
+                              "args": [
+                                "ui-repo-items",
+                                "pulls"
+                              ],
+                              "async": true
+                            }
+                          ]
+                        }
+                      ],
+                      "font": null
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "filter",
+              "type": "textfield",
+              "placeholder": "Filter open issues   ·   ⌘2 pull requests   ·   ↑↓ select   ↩ open",
+              "focus": true,
+              "events": [
+                {
+                  "triggers": "changed",
+                  "action": {
+                    "type": "function",
+                    "src": "items",
+                    "args": "filterdata"
+                  }
+                },
+                {
+                  "triggers": "actioned",
+                  "action": {
+                    "type": "json",
+                    "variables": {
+                      "item_url": "{value:items.selected.url.text}"
+                    },
+                    "src": {
+                      "open": {
+                        "type": "url",
+                        "src": "{var:item_url}"
+                      },
+                      "finish": {}
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "constraints": {
+            "region": "centre"
+          },
+          "type": "view",
+          "layout": "stack",
+          "components": [
+            {
+              "id": "items",
+              "type": "dataview",
+              "spacing": 2,
+              "cell": {
+                "height": 46,
+                "init": {
+                  "cell.background": null
+                },
+                "selected": {
+                  "cell.background": "alfredSelectedResultBackgroundColor"
+                },
+                "root": {
+                  "id": "cell",
+                  "type": "view",
+                  "layout": "stack",
+                  "cornerradius": 6,
+                  "components": [
+                    {
+                      "id": "url",
+                      "type": "label",
+                      "hidden": true
+                    },
+                    {
+                      "type": "view",
+                      "layout": "inline",
+                      "direction": "vertical",
+                      "spacing": 1,
+                      "padding": 7,
+                      "components": [
+                        {
+                          "id": "rowtitle",
+                          "type": "label",
+                          "linebreak": "truncatetail"
+                        },
+                        {
+                          "id": "rowsubtitle",
+                          "type": "label",
+                          "font": {
+                            "size": "small"
+                          },
+                          "colour": "secondaryLabelColor",
+                          "linebreak": "truncatetail"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              "data": {
+                "type": "basic",
+                "src": []
+              },
+              "events": [
+                {
+                  "triggers": "doubleclicked",
+                  "action": {
+                    "type": "json",
+                    "variables": {
+                      "item_url": "{value:items.selected.url.text}"
+                    },
+                    "src": {
+                      "open": {
+                        "type": "url",
+                        "src": "{var:item_url}"
+                      },
+                      "finish": {}
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": "loading",
+              "type": "label",
+              "text": "Loading…",
+              "textalign": "centre",
+              "font": {
+                "size": "extralarge",
+                "weight": "medium"
+              },
+              "colour": "secondaryLabelColor",
+              "constraints": {
+                "position": "centre"
+              }
+            }
+          ]
+        },
+        {
+          "constraints": {
+            "region": "bottom"
+          },
+          "type": "view",
+          "layout": "border",
+          "spacing": 8,
+          "components": [
+            {
+              "id": "status",
+              "type": "label",
+              "text": " ",
+              "font": {
+                "size": "small"
+              },
+              "colour": "secondaryLabelColor",
+              "linebreak": "truncatetail",
+              "constraints": {
+                "region": "centre",
+                "position": "centre"
+              }
+            },
+            {
+              "constraints": {
+                "region": "right"
+              },
+              "type": "view",
+              "layout": "inline",
+              "direction": "horizontal",
+              "spacing": 6,
+              "components": [
+                {
+                  "type": "button",
+                  "text": "Open in Browser  ⌘O",
+                  "events": [
+                    {
+                      "triggers": "actioned",
+                      "action": {
+                        "type": "json",
+                        "src": {
+                          "open": {
+                            "type": "url",
+                            "src": "{var:repo_html_url}"
+                          },
+                          "finish": {}
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "button",
+                  "text": "Copy HTTPS  ⌘C",
+                  "events": [
+                    {
+                      "triggers": "actioned",
+                      "action": {
+                        "type": "script",
+                        "src": "../scripts/run.sh",
+                        "args": [
+                          "ui-copy",
+                          "https"
+                        ],
+                        "async": true
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "button",
+                  "text": "Copy SSH  ⌥⌘C",
+                  "events": [
+                    {
+                      "triggers": "actioned",
+                      "action": {
+                        "type": "script",
+                        "src": "../scripts/run.sh",
+                        "args": [
+                          "ui-copy",
+                          "ssh"
+                        ],
+                        "async": true
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -3,10 +3,8 @@ package cmd
 import (
 	"time"
 
-	aw "github.com/deanishe/awgo"
 	"github.com/google/go-github/v89/github"
 	"github.com/rwilgaard/alfred-github-search/src/internal/util"
-	"github.com/rwilgaard/go-alfredutils/alfredutils"
 	"github.com/spf13/cobra"
 )
 
@@ -15,28 +13,19 @@ var reposCmd = &cobra.Command{
 	Short: "list the authenticated user's repositories",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
-		if err := alfredutils.CheckForUpdates(wf); err != nil {
-			wf.FatalError(err)
-		}
-
-		if ok := alfredutils.HandleAuthentication(wf, keychainAccount); !ok {
+		if !wf.RequireAuth(keychainAccount) {
 			return
 		}
 
 		var repos []*github.Repository
-		if err := alfredutils.LoadCache(wf, repoCacheName, &repos); err != nil {
+		if err := wf.Cache.LoadJSONIfExists(repoCacheName, &repos); err != nil {
 			wf.FatalError(err)
 		}
 
 		maxCacheAge := time.Duration(cfg.CacheAge) * time.Minute
-		if err := alfredutils.RefreshCache(wf, repoCacheName, maxCacheAge, []string{"cache", "repos"}, util.GetIcon("refresh")); err != nil {
+		refreshing, err := wf.RefreshIfStale(repoCacheName, maxCacheAge, repoCacheJob)
+		if err != nil {
 			wf.FatalError(err)
-		}
-
-		refreshing := wf.Cache.Exists(repoCacheName) && wf.IsRunning(repoCacheName)
-
-		if refreshing {
-			wf.Configure(aw.SuppressUIDs(true))
 		}
 
 		var query string
@@ -44,37 +33,17 @@ var reposCmd = &cobra.Command{
 			query = args[0]
 		}
 
-		for _, repo := range repos {
-			subtitle := buildRepoSubtitle(repo)
-			item := wf.NewItem(*repo.Name).
-				UID(*repo.FullName).
-				Subtitle(subtitle).
-				Icon(repoIcon(repo)).
-				Var("item_url", repo.GetHTMLURL()).
-				Arg("repo").
-				Valid(true)
-
-			item.NewModifier(aw.ModCmd).
-				Subtitle("View repository details and actions").
-				Var("repo_fullname", repo.GetFullName()).
-				Var("repo_html_url", repo.GetHTMLURL()).
-				Var("repo_clone_url", repo.GetCloneURL()).
-				Var("repo_ssh_url", repo.GetSSHURL()).
-				Var("list_query", query).
-				Var("origin_cmd", "repos").
-				Arg("details").
-				Valid(true)
+		if refreshing && len(repos) > 0 {
+			wf.NewItem("Updating repositories from GitHub...").
+				Subtitle("Showing cached results in the meantime").
+				Icon(util.IconRefresh).
+				Pin()
 		}
 
-		if len(query) > 0 {
-			wf.Filter(query)
-		}
+		addRepoItems(repos)
 
-		if refreshing {
-			prependItem("Updating repositories from GitHub...", "Showing cached results in the meantime")
-		}
-
-		alfredutils.HandleFeedback(wf)
+		wf.Filter(query)
+		wf.Send()
 	},
 }
 
