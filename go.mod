@@ -4,6 +4,7 @@ go 1.27.4
 
 require (
 	github.com/google/go-github/v89 v89.0.0
+	github.com/google/go-github/v93 v93.0.0
 	github.com/maniartech/gotime/v2 v2.0.4
 	github.com/rwilgaard/go-alfredutils/v2 v2.5.1
 	github.com/spf13/cobra v1.10.2
