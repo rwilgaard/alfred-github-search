@@ -44,6 +44,7 @@ Shows the repository's description, visibility, language, stars, forks, last pus
 | type | Filter the list |
 | ↑ ↓ | Select an issue or pull request |
 | ⏎ / double-click | Open the selected issue or pull request |
+| ⌘Y | Preview the selected issue or pull request: title, state, branches, labels, assignees and description. ⏎ opens it on GitHub, Esc closes the preview |
 | ⌘1 / ⌘2 | Show open issues / open pull requests |
 | ⌘O | Open the repository in your browser |
 | ⌘C | Copy the HTTPS clone URL |

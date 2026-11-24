@@ -3,8 +3,10 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/google/go-github/v89/github"
 	"github.com/maniartech/gotime/v2"
@@ -196,7 +198,7 @@ func showRows(a alfredui.Actions, kind string, rows []alfredui.Props) alfredui.A
 	if len(rows) == 0 {
 		loading = alfredui.Props{"hidden": false, "text": "No open " + noun}
 	}
-	placeholder := fmt.Sprintf("Filter %s open %s   ·   %s   ·   ↑↓ select   ↩ open",
+	placeholder := fmt.Sprintf("Filter %s open %s   ·   %s   ·   ↩ open   ·   ⌘Y preview",
 		countText(len(rows), 50), noun, other)
 
 	return a.Set(uiItems, alfredui.Props{"data": map[string]any{
@@ -223,17 +225,29 @@ func issueRows(issues []*github.Issue) []alfredui.Props {
 			"by " + iss.GetUser().GetLogin(),
 			timeAgo(iss.UpdatedAt),
 		}
-		switch n := iss.GetComments(); n {
-		case 0:
-		case 1:
-			parts = append(parts, "1 comment")
-		default:
-			parts = append(parts, fmt.Sprintf("%d comments", n))
+		if c := comments(iss.GetComments()); c != "" {
+			parts = append(parts, c)
 		}
-		if labels := issueLabels(iss.Labels); labels != "" {
+		labels := issueLabels(iss.Labels)
+		if labels != "" {
 			parts = append(parts, labels)
 		}
-		rows = append(rows, row(iss.GetTitle(), strings.Join(parts, "  ·  "), iss.GetHTMLURL()))
+
+		detail := []string{
+			"Open issue",
+			fmt.Sprintf("opened %s by %s", lowerTime(iss.CreatedAt), iss.GetUser().GetLogin()),
+			"updated " + lowerTime(iss.UpdatedAt),
+		}
+		if c := comments(iss.GetComments()); c != "" {
+			detail = append(detail, c)
+		}
+
+		rows = append(rows, row(iss.GetTitle(), strings.Join(parts, "  ·  "), iss.GetHTMLURL(), preview{
+			title:  fmt.Sprintf("#%d  %s", iss.GetNumber(), iss.GetTitle()),
+			detail: strings.Join(detail, "  ·  "),
+			tags:   tagLine(labels, iss.Assignees),
+			body:   iss.GetBody(),
+		}))
 	}
 	return rows
 }
@@ -250,17 +264,154 @@ func pullRows(prs []*github.PullRequest) []alfredui.Props {
 		if pr.GetDraft() {
 			parts = append(parts, "Draft")
 		}
-		rows = append(rows, row(pr.GetTitle(), strings.Join(parts, "  ·  "), pr.GetHTMLURL()))
+
+		state := "Open pull request"
+		if pr.GetDraft() {
+			state = "Draft pull request"
+		}
+		detail := []string{
+			state,
+			pr.GetHead().GetRef() + " → " + pr.GetBase().GetRef(),
+			fmt.Sprintf("opened %s by %s", lowerTime(pr.CreatedAt), pr.GetUser().GetLogin()),
+			"updated " + lowerTime(pr.UpdatedAt),
+		}
+
+		rows = append(rows, row(pr.GetTitle(), strings.Join(parts, "  ·  "), pr.GetHTMLURL(), preview{
+			title:  fmt.Sprintf("#%d  %s", pr.GetNumber(), pr.GetTitle()),
+			detail: strings.Join(detail, "  ·  "),
+			tags:   tagLine(issueLabels(pr.Labels), pr.Assignees),
+			body:   pr.GetBody(),
+		}))
 	}
 	return rows
 }
 
-func row(title, subtitle, url string) alfredui.Props {
+// preview is what the ⌘Y sheet shows for a row. It travels in hidden cell
+// labels, so opening the sheet needs no request and no process.
+type preview struct {
+	title, detail, tags, body string
+}
+
+func row(title, subtitle, url string, p preview) alfredui.Props {
 	return alfredui.Props{
 		"rowtitle.text":    title,
 		"rowsubtitle.text": subtitle,
 		"url.text":         url,
+		"ptitle.text":      p.title,
+		"pdetail.text":     p.detail,
+		"ptags.text":       orSpace(p.tags),
+		"pbody.text":       previewBody(p.body),
 	}
+}
+
+// maxPreviewBody caps the body sent per row: 50 rows go to the window on
+// every load, and the sheet is a preview, not a reader.
+const maxPreviewBody = 20000
+
+var (
+	htmlComment = regexp.MustCompile(`(?s)<!--.*?-->`)
+	// GitHub task list items; the markdownarea shows "[x]" literally.
+	taskDone = regexp.MustCompile(`(?m)^(\s*[-*+]\s+)\[[xX]\]`)
+	taskOpen = regexp.MustCompile(`(?m)^(\s*[-*+]\s+)\[ \]`)
+)
+
+// previewBody prepares a body for the markdownarea: issue templates' HTML
+// comments are dropped, task list boxes become ☑/☐, identifiers with underscores
+// become code spans, and long bodies are cut at a line break.
+func previewBody(body string) string {
+	body = strings.ReplaceAll(body, "\r\n", "\n")
+	body = strings.TrimSpace(htmlComment.ReplaceAllString(body, ""))
+	body = taskDone.ReplaceAllString(body, "${1}☑")
+	body = taskOpen.ReplaceAllString(body, "${1}☐")
+	body = codeIdentifiers(body)
+	if body == "" {
+		return "_No description provided._"
+	}
+	if len(body) > maxPreviewBody {
+		cut := body[:maxPreviewBody]
+		if i := strings.LastIndexByte(cut, '\n'); i > 0 {
+			cut = cut[:i]
+		}
+		body = strings.ToValidUTF8(cut, "") + "\n\n_… truncated. Press ↩ to read it on GitHub._"
+	}
+	return body
+}
+
+// lowLine stands in for "_" inside identifiers. The markdownarea pairs any
+// two underscores as emphasis, even inside code spans, and ignores backslash
+// escapes; U+02CD MODIFIER LETTER LOW MACRON looks the same in Menlo (same
+// width) and isn't markdown. Preview only: copied text has the look-alike.
+const lowLine = "\u02CD"
+
+// codeIdentifiers shows words with an underscore inside them, such as
+// tc_redirect_* or local_delivery, as code with their underscores intact.
+// GitHub never treats those underscores as emphasis; the markdownarea does
+// (tc_redirect_* became "tc*redirect*" in italics). Fenced blocks, lines with
+// code spans, links and HTML are left alone.
+func codeIdentifiers(body string) string {
+	lines := strings.Split(body, "\n")
+	inFence := false
+	for i, line := range lines {
+		if t := strings.TrimSpace(line); strings.HasPrefix(t, "```") || strings.HasPrefix(t, "~~~") {
+			inFence = !inFence
+			continue
+		}
+		if inFence || !strings.Contains(line, "_") || strings.Contains(line, "`") {
+			continue
+		}
+		words := strings.Split(line, " ")
+		for j, w := range words {
+			words[j] = codeWord(w)
+		}
+		lines[i] = strings.Join(words, " ")
+	}
+	return strings.Join(lines, "\n")
+}
+
+func codeWord(w string) string {
+	if strings.ContainsAny(w, "<>[]()") || strings.Contains(w, "://") {
+		return w
+	}
+	core := strings.TrimRight(w, ".,;:!?")
+	rs := []rune(core)
+	for k := 1; k < len(rs)-1; k++ {
+		if rs[k] == '_' && isWordRune(rs[k-1]) {
+			return "`" + strings.ReplaceAll(core, "_", lowLine) + "`" + w[len(core):]
+		}
+	}
+	return w
+}
+
+func isWordRune(r rune) bool { return unicode.IsLetter(r) || unicode.IsDigit(r) }
+
+func tagLine(labels string, assignees []*github.User) string {
+	var parts []string
+	if labels != "" {
+		parts = append(parts, "Labels: "+labels)
+	}
+	if len(assignees) > 0 {
+		names := make([]string, 0, len(assignees))
+		for _, a := range assignees {
+			names = append(names, a.GetLogin())
+		}
+		parts = append(parts, "Assignees: "+strings.Join(names, ", "))
+	}
+	return strings.Join(parts, "  ·  ")
+}
+
+func comments(n int) string {
+	switch n {
+	case 0:
+		return ""
+	case 1:
+		return "1 comment"
+	default:
+		return fmt.Sprintf("%d comments", n)
+	}
+}
+
+func lowerTime(t *github.Timestamp) string {
+	return strings.ToLower(timeAgo(t))
 }
 
 func issueLabels(labels []*github.Label) string {
@@ -288,7 +439,7 @@ func repoMeta(r *github.Repository) string {
 	parts = append(parts,
 		fmt.Sprintf("★ %d", r.GetStargazersCount()),
 		fmt.Sprintf("%d forks", r.GetForksCount()),
-		"pushed "+strings.ToLower(timeAgo(r.PushedAt)),
+		"pushed "+lowerTime(r.PushedAt),
 	)
 	if topics := r.Topics; len(topics) > 0 {
 		parts = append(parts, strings.Join(topics, ", "))
